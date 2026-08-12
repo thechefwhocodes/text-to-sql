@@ -1,8 +1,5 @@
-"""Catalog of Fireworks models available to src.llm.FireworksLLM.
-
-To try a new model: look up its id on https://fireworks.ai/models and its
-$/1M token price on https://docs.fireworks.ai/serverless/pricing, then add
-one ModelConfig entry to MODELS below. Nothing else needs to change.
+"""
+Catalog of Fireworks models available to src.llm.FireworksLLM.
 """
 
 from dataclasses import dataclass
@@ -13,6 +10,13 @@ class ModelConfig:
     id: str  # full Fireworks model id, e.g. "accounts/fireworks/models/minimax-m3"
     input_price_per_million: float  # USD per 1M input tokens
     output_price_per_million: float  # USD per 1M output tokens
+
+    def cost(self, prompt_tokens: int, completion_tokens: int) -> float:
+        """USD cost of a single call, given its token usage (assuming no thinking tokens)."""
+        return (
+            prompt_tokens * self.input_price_per_million
+            + completion_tokens * self.output_price_per_million
+        ) / 1_000_000
 
 
 MODELS: dict[str, ModelConfig] = {

@@ -59,6 +59,6 @@ DEFAULT_MODEL = GPT_OSS_120B
 def get_model(name: str) -> ModelConfig:
     if name not in MODELS:
         raise ValueError(
-            f"Unknown model '{name}'. Available models: {', '.join(sorted(MODELS))}"
+            f"Unknown model '{name}'. Available models: {', '.join(sorted(MODELS.keys()))}"
         )
     return MODELS[name]

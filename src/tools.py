@@ -46,6 +46,11 @@ class Tool(ABC):
     def run(self, conn: sqlite3.Connection, args: dict) -> ToolResult:
         """Execute the tool call and return its result."""
 
+    def parse_tool_args(self, raw: str) -> dict:
+        """Parse a tool call's JSON arguments"""
+        data = json.loads(raw)
+        return self.parameters.model_validate(data).model_dump()
+
 
 class RunSQLArgs(BaseModel):
     """The arguments the model fills in to call run_sql."""
@@ -93,6 +98,10 @@ TOOLS: dict[str, Tool] = {tool.name: tool for tool in [RunSQLTool()]}
 
 
 def get_tool(name: str) -> Tool:
+    if name not in TOOLS:
+        raise ValueError(
+            f"Unknown tool '{name}'. Available tools: {', '.join(sorted(TOOLS.keys()))}"
+        )
     return TOOLS[name]
 
 

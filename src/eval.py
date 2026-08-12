@@ -1,12 +1,19 @@
-"""Score our agent against the customer's baseline. Run with: python -m src.eval
+"""Evaluate our agent against the customer's baseline over the dev question set.
 
-Runs both arms over the 10 dev questions RUNS times each and averages the
-results — accuracy on 10 questions is noisy enough that a single run isn't
-reliable. GPT-5.4 answers are cached to data/eval_cache.json, so re-running
-this script doesn't re-charge for them.
+Run with: python -m src.eval
+
+Every dev question is sent through our agent (GPT-OSS-120B, the default model)
+and through the customer's baseline prompt (GPT-5.4), RUNS times each — accuracy
+on 10 questions is noisy enough that a single run isn't reliable. Baseline
+answers are cached to data/eval_cache.json since the customer's prompt doesn't
+change between runs, so re-running this script doesn't re-charge for them.
+
+Results (accuracy, latency, cost/query, plus which questions were missed and
+how often) are printed and written into README.md.
 """
 
 import json
+from dataclasses import dataclass
 from pathlib import Path
 
 import pandas as pd
@@ -20,9 +27,18 @@ from src.utils import load_db
 QUESTIONS_PATH = Path("data/dev_questions_with_answers.json")
 CACHE_PATH = Path("data/eval_cache.json")
 ANSWERS_PATH = Path("data/dev_answers.json")
+README_PATH = Path("README.md")
 
 RUNS = 3
 QUERIES_PER_DAY = 30_000
+
+RESULTS_START = "<!-- eval-results:start -->"
+RESULTS_END = "<!-- eval-results:end -->"
+
+
+# ---------------------------------------------------------------------------
+# Scoring
+# ---------------------------------------------------------------------------
 
 
 def is_correct(answer: Answer, expected: list[dict]) -> bool:
@@ -41,25 +57,52 @@ def is_correct(answer: Answer, expected: list[dict]) -> bool:
     return bag(answer.rows.to_dict("records")) == bag(expected)
 
 
-def run_agent(conn, questions: list[dict], llm: LLM) -> list[Answer]:
-    """Our agent, one fresh conversation per question."""
+@dataclass
+class Score:
+    """One question's result within one run."""
+
+    question_id: str
+    correct: bool
+    latency_s: float
+    cost_usd: float
+
+
+def score_run(questions: list[dict], answers: list[Answer]) -> list[Score]:
     return [
-        Agent(conn, model=GPT_OSS_120B, llm=llm).ask(q["question"]) for q in questions
+        Score(
+            question_id=q["id"],
+            correct=is_correct(a, q["expected_result"]),
+            latency_s=a.latency_s,
+            cost_usd=a.cost_usd,
+        )
+        for q, a in zip(questions, answers)
     ]
 
 
-def run_baseline(conn, questions: list[dict], run_idx: int, cache: dict, llm: LLM) -> list[Answer]:
+# ---------------------------------------------------------------------------
+# Running the two arms
+# ---------------------------------------------------------------------------
+
+
+def run_agent(conn, questions: list[dict], llm: LLM) -> list[Answer]:
+    """Our agent, one fresh conversation per question."""
+    return [Agent(conn, model=GPT_OSS_120B, llm=llm).ask(q["question"]) for q in questions]
+
+
+def run_baseline_cached(
+    conn, questions: list[dict], run_idx: int, cache: dict, llm: LLM
+) -> list[Answer]:
     """The customer's prompt, reusing a cached answer for this run if we have one."""
     answers = []
     for q in questions:
         key = f"{q['id']}_{run_idx}"
         if key not in cache:
-            cache[key] = to_cache(ask_baseline(conn, llm, q["question"], model=GPT_5_4))
-        answers.append(from_cache(cache[key]))
+            cache[key] = _to_cache(ask_baseline(conn, llm, q["question"], model=GPT_5_4))
+        answers.append(_from_cache(cache[key]))
     return answers
 
 
-def to_cache(answer: Answer) -> dict:
+def _to_cache(answer: Answer) -> dict:
     """Flatten an Answer to plain JSON — `rows` is a DataFrame, which isn't
     serialisable, and everything else is already a plain type."""
     return {
@@ -72,7 +115,7 @@ def to_cache(answer: Answer) -> dict:
     }
 
 
-def from_cache(entry: dict) -> Answer:
+def _from_cache(entry: dict) -> Answer:
     rows = None if entry["rows"] is None else pd.DataFrame(entry["rows"])
     return Answer(
         text=entry["text"],
@@ -84,43 +127,113 @@ def from_cache(entry: dict) -> Answer:
     )
 
 
-def summarize(questions: list[dict], answers: list[Answer]) -> dict:
-    """Accuracy, latency and cost for one run over all 10 questions."""
-    correct = sum(is_correct(a, q["expected_result"]) for q, a in zip(questions, answers))
-    return {
-        "correct": correct,
-        "avg_latency_s": sum(a.latency_s for a in answers) / len(answers),
-        "avg_cost_usd": sum(a.cost_usd for a in answers) / len(answers),
-    }
+# ---------------------------------------------------------------------------
+# Aggregating results across runs
+# ---------------------------------------------------------------------------
 
 
-def report(name: str, questions: list[dict], runs: list[list[Answer]]) -> None:
-    """Print per-run and averaged results, plus which questions failed and how often."""
-    print(f"\n{name} — {len(runs)} runs")
+@dataclass
+class Summary:
+    """Metrics for one arm (agent or baseline), aggregated across all runs."""
 
-    summaries = [summarize(questions, answers) for answers in runs]
-    for i, s in enumerate(summaries, 1):
-        print(
-            f"  run {i}: {s['correct']}/{len(questions)}   "
-            f"{s['avg_latency_s']:.2f}s/query   ${s['avg_cost_usd']:.5f}/query"
-        )
+    name: str
+    num_questions: int
+    num_runs: int
+    accuracy: float
+    avg_latency_s: float
+    avg_cost_usd: float
+    misses: dict[str, int]  # question id -> number of runs it was wrong
 
-    avg_correct = sum(s["correct"] for s in summaries) / len(summaries)
-    avg_latency = sum(s["avg_latency_s"] for s in summaries) / len(summaries)
-    avg_cost = sum(s["avg_cost_usd"] for s in summaries) / len(summaries)
-    print(
-        f"  avg  : {avg_correct:.1f}/{len(questions)}   {avg_latency:.2f}s/query   "
-        f"${avg_cost:.5f}/query   ${avg_cost * QUERIES_PER_DAY:.2f}/day at {QUERIES_PER_DAY:,} queries"
+
+def summarize(name: str, scores: list[Score]) -> Summary:
+    """Aggregate every (question, run) score into one Summary."""
+    question_ids = {s.question_id for s in scores}
+
+    misses: dict[str, int] = {}
+    for s in scores:
+        if not s.correct:
+            misses[s.question_id] = misses.get(s.question_id, 0) + 1
+
+    return Summary(
+        name=name,
+        num_questions=len(question_ids),
+        num_runs=len(scores) // len(question_ids),
+        accuracy=sum(s.correct for s in scores) / len(scores),
+        avg_latency_s=sum(s.latency_s for s in scores) / len(scores),
+        avg_cost_usd=sum(s.cost_usd for s in scores) / len(scores),
+        misses=misses,
     )
 
-    misses = {}
-    for answers in runs:
-        for q, a in zip(questions, answers):
-            if not is_correct(a, q["expected_result"]):
-                misses[q["id"]] = misses.get(q["id"], 0) + 1
-    if misses:
-        summary = ", ".join(f"{qid} ({n}/{len(runs)})" for qid, n in sorted(misses.items()))
-        print(f"  missed: {summary}")
+
+def print_summary(summary: Summary) -> None:
+    print(f"\n{summary.name} — {summary.num_runs} runs x {summary.num_questions} questions")
+    print(
+        f"  accuracy: {summary.accuracy:.1%}\n"
+        f"  latency : {summary.avg_latency_s:.2f}s/query\n"
+        f"  cost    : ${summary.avg_cost_usd:.5f}/query  "
+        f"-> ${summary.avg_cost_usd * QUERIES_PER_DAY:.2f}/day at {QUERIES_PER_DAY:,} queries"
+    )
+    if summary.misses:
+        detail = ", ".join(
+            f"{qid} ({n}/{summary.num_runs})" for qid, n in sorted(summary.misses.items())
+        )
+        print(f"  missed  : {detail}")
+
+
+# ---------------------------------------------------------------------------
+# Reporting
+# ---------------------------------------------------------------------------
+
+
+def render_markdown(summaries: list[Summary], questions: list[dict]) -> str:
+    question_text = {q["id"]: q["question"] for q in questions}
+
+    lines = [
+        RESULTS_START,
+        "## Evaluation Results",
+        "",
+        "_Auto-generated by `python -m src.eval` — do not edit by hand._",
+        "",
+        f"{summaries[0].num_runs} runs over {summaries[0].num_questions} dev questions.",
+        "",
+        "| Arm | Accuracy | Avg Latency/query | Avg Cost/query | Est. $/day @ 30k queries |",
+        "|---|---|---|---|---|",
+    ]
+    for s in summaries:
+        lines.append(
+            f"| {s.name} | {s.accuracy:.1%} | {s.avg_latency_s:.2f}s | "
+            f"${s.avg_cost_usd:.5f} | ${s.avg_cost_usd * QUERIES_PER_DAY:,.2f} |"
+        )
+
+    lines += ["", "### Missed Questions", ""]
+    for s in summaries:
+        lines.append(f"**{s.name}**")
+        lines.append("")
+        if not s.misses:
+            lines.append("_None — every question was answered correctly in every run._")
+        else:
+            for qid, n in sorted(s.misses.items()):
+                lines.append(f"- `{qid}` — wrong {n}/{s.num_runs} runs: {question_text[qid]}")
+        lines.append("")
+
+    lines.append(RESULTS_END)
+    return "\n".join(lines)
+
+
+def write_readme_section(markdown: str) -> None:
+    """Replace the eval-results section in README.md (between markers), or
+    append it as a new section if this is the first time the eval has run."""
+    text = README_PATH.read_text() if README_PATH.exists() else ""
+
+    if RESULTS_START in text and RESULTS_END in text:
+        before = text.split(RESULTS_START)[0]
+        after = text.split(RESULTS_END)[1]
+        text = before + markdown + after
+    else:
+        separator = "" if not text or text.endswith("\n\n") else "\n\n"
+        text = text + separator + markdown + "\n"
+
+    README_PATH.write_text(text)
 
 
 def write_dev_answers(questions: list[dict], answers: list[Answer]) -> None:
@@ -129,25 +242,51 @@ def write_dev_answers(questions: list[dict], answers: list[Answer]) -> None:
     print(f"\nWrote {ANSWERS_PATH}")
 
 
+# ---------------------------------------------------------------------------
+# Entry point
+# ---------------------------------------------------------------------------
+
+
 def main() -> None:
     questions = json.loads(QUESTIONS_PATH.read_text())
     conn = load_db()
     llm = LLM()
 
+    print(f"Our agent ({GPT_OSS_120B}): {RUNS} runs x {len(questions)} questions")
     agent_runs = [run_agent(conn, questions, llm) for _ in range(RUNS)]
-    report(f"Our agent ({GPT_OSS_120B})", questions, agent_runs)
+    agent_summary = summarize(
+        f"Our agent ({GPT_OSS_120B})",
+        [score for run in agent_runs for score in score_run(questions, run)],
+    )
     write_dev_answers(questions, agent_runs[0])
+    print_summary(agent_summary)
+
+    summaries = [agent_summary]
 
     cache = json.loads(CACHE_PATH.read_text()) if CACHE_PATH.exists() else {}
+    baseline_summary = None
     try:
-        baseline_runs = [run_baseline(conn, questions, i, cache, llm) for i in range(RUNS)]
+        print(f"\nBaseline ({GPT_5_4}): {RUNS} runs x {len(questions)} questions (cached where possible)")
+        baseline_runs = [run_baseline_cached(conn, questions, i, cache, llm) for i in range(RUNS)]
     except Exception as e:
-        print(f"\nSkipping baseline arm: {e}")
+        print(f"  skipping baseline arm: {e}")
     else:
+        baseline_summary = summarize(
+            f"Baseline ({GPT_5_4})",
+            [score for run in baseline_runs for score in score_run(questions, run)],
+        )
+        print_summary(baseline_summary)
+    finally:
+        # Persist whatever got cached, even if a later question failed.
         CACHE_PATH.write_text(json.dumps(cache, indent=2))
-        report(f"Customer baseline ({GPT_5_4})", questions, baseline_runs)
+
+    if baseline_summary:
+        summaries.append(baseline_summary)
 
     conn.close()
+
+    write_readme_section(render_markdown(summaries, questions))
+    print(f"\nWrote results to {README_PATH}")
 
 
 if __name__ == "__main__":

@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 import pandas as pd
+from pydantic import ValidationError
 
 from src.llm import LLM
 from src.models import DEFAULT_MODEL
@@ -17,6 +18,7 @@ from src.utils import get_ddl
 
 SYSTEM_PROMPT = """
 You are a SQL analyst answering questions about a SQLite database.
+Only select the columns needed to answer the question.
 
 Schema: {ddl}"""
 
@@ -77,8 +79,15 @@ class Agent:
                 break
 
             tool_call = turn.tool_calls[0]
-            args = json.loads(tool_call.function.arguments)
-            result = get_tool(tool_call.function.name).run(self.conn, args)
+            try:
+                tool = get_tool(tool_call.function.name)
+                args = tool.parse_tool_args(tool_call.function.arguments)
+            except (json.JSONDecodeError, ValidationError) as e:
+                error = json.dumps({"error": f"Malformed tool call: {e}"})
+                self.conversation.append(ToolTurn(tool_call_id=tool_call.id, content=error))
+                continue
+
+            result = tool.run(self.conn, args)
             attempts += 1
 
             if result.rows is not None:

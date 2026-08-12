@@ -33,7 +33,6 @@ class Tool(ABC):
     defination: str
     parameters: BaseModel
 
-    @abstractmethod
     def to_definition(self) -> dict:
         return {
             "type": "function",
@@ -65,9 +64,9 @@ class RunSQLTool(Tool):
     parameters = RunSQLArgs
 
     def run(self, conn: sqlite3.Connection, args: dict) -> ToolResult:
-        return self.run_sql(conn, args["sql"])
+        return self.run_sql(conn, args["sql"]) # handle the case where sql is not in the args
 
-    def _check_sql(sql: str) -> None:
+    def _check_sql(self, sql: str) -> None:
         """Only support a single read-only statement"""
 
         stripped = sql.strip().rstrip(";").strip()

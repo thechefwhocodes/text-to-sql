@@ -29,7 +29,7 @@ def main() -> None:
         if answer.sql:
             print(f"\nSQL:\n{answer.sql}")
         if answer.rows is not None:
-            print(f"\n{answer.rows.to_string(index=False)}")
+            print(f"\nRows:\n{answer.rows.to_string(index=False)}")
 
         print(f"\n{answer.text}")
 

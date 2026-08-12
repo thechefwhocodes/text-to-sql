@@ -76,16 +76,16 @@ class Agent:
                 text = turn.content
                 break
 
-            call = turn.tool_calls[0]
-            args = json.loads(call.function.arguments)
-            sql = args.get("sql")
-            result = get_tool(call.function.name).run(self.conn, args)
+            tool_call = turn.tool_calls[0]
+            args = json.loads(tool_call.function.arguments)
+            result = get_tool(tool_call.function.name).run(self.conn, args)
             attempts += 1
 
             if result.rows is not None:
                 rows = result.rows
+            sql = args.get("sql") # for reporting Answer
 
-            self.conversation.append(ToolTurn(tool_call_id=call.id, content=result.content))
+            self.conversation.append(ToolTurn(tool_call_id=tool_call.id, content=result.content))
 
         return Answer(
             text=text,

@@ -6,7 +6,7 @@ message, model response, or tool result. Turn is the interface: every subclass
 implements `to_message`, which renders it into the shape the chat API expects.
 """
 
-from abc import ABC, abstractmethod
+from abc import ABC
 from dataclasses import dataclass
 from typing import Any, ClassVar, Literal
 
@@ -14,10 +14,12 @@ from openai.types.chat import ChatCompletion
 
 from src.models import ModelConfig
 
-SYSTEM_ROLE = "system"
+
 USER_ROLE = "user"
-ASSISTANT_ROLE = "assistant"
 TOOL_ROLE = "tool"
+SYSTEM_ROLE = "system"
+ASSISTANT_ROLE = "assistant"
+
 
 Role = Literal[SYSTEM_ROLE, USER_ROLE, ASSISTANT_ROLE, TOOL_ROLE]
 
@@ -27,17 +29,18 @@ class Turn(ABC):
 
     role: ClassVar[Role]
 
-    @abstractmethod
     def to_message(self) -> dict:
         return {"role": self.role, "content": self.content}
 
 
+@dataclass
 class SystemTurn(Turn):
     """The instructions and schema. Always the first turn in a conversation."""
     content: str
     role: ClassVar[Role] = SYSTEM_ROLE
 
 
+@dataclass
 class UserTurn(Turn):
     """A question typed by the user."""
     content: str
@@ -64,7 +67,7 @@ class AgentTurn(Turn):
         return self.raw_message.tool_calls
 
     def to_message(self) -> dict:
-        return {"role": self.role, "content": self.raw_message}
+        return self.raw_message.model_dump(exclude_none=True) # role and content is already present inside raw_message
 
     @classmethod
     def from_completion(

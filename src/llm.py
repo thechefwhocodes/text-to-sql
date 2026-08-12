@@ -44,19 +44,3 @@ class FireworksLLM:
         return AgentTurn.from_completion(
             completion, model=model, model_config=model_config, latency_s=latency_s
         )
-
-
-def main() -> None:
-    llm = FireworksLLM()
-    messages = [{"role": "user", "content": "Say hello in Spanish"}]
-
-    turn = llm.chat(messages)
-    print(turn.content)
-    print(
-        f"model={turn.model} latency={turn.latency_s:.2f}s "
-        f"tokens={turn.total_tokens} cost=${turn.cost_usd:.6f}"
-    )
-
-
-if __name__ == "__main__":
-    main()

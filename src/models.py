@@ -20,11 +20,6 @@ class ModelConfig:
 
 
 MODELS: dict[str, ModelConfig] = {
-    "minimax-m3": ModelConfig(
-        id="accounts/fireworks/models/minimax-m3",
-        input_price_per_million=0.30,
-        output_price_per_million=1.20,
-    ),
     "kimi-k2p7-code-fast": ModelConfig(
         id="accounts/fireworks/routers/kimi-k2p7-code-fast",
         input_price_per_million=1.90,
@@ -41,10 +36,8 @@ DEFAULT_MODEL = "gpt-oss-120b"
 
 
 def get_model(name: str) -> ModelConfig:
-    """Look up a model by its short key (e.g. "minimax-m3")."""
-    try:
-        return MODELS[name]
-    except KeyError:
+    if name not in MODELS:
         raise ValueError(
             f"Unknown model '{name}'. Available models: {', '.join(sorted(MODELS))}"
-        ) from None
+        )
+    return MODELS[name]

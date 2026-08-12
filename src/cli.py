@@ -16,6 +16,8 @@ def main() -> None:
     for table in tables:
         print_table_schema(db_connection, table)
 
+    print(f"All Schemas: /n{schemas}")
+
 
 if __name__ == "__main__":
     main()

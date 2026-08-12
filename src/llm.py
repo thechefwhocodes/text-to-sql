@@ -1,8 +1,9 @@
-"""Thin wrapper around the Fireworks chat completions API (OpenAI-compatible).
+"""Thin wrapper around the OpenAI-compatible chat completions API.
 
-Swap models by passing a different key from src.models.MODELS — every call
-made through a FireworksLLM instance is timed and turned into an AgentTurn,
-so latency/cost/tokens travel with the conversation history automatically.
+Swap models by passing a different key from src.models.MODELS — each config
+carries its own base URL and API key, so the same code talks to Fireworks or
+OpenAI. Every call is timed and turned into an AgentTurn, so latency/cost/tokens
+travel with the conversation history automatically.
 """
 
 import os
@@ -16,25 +17,21 @@ from src.turns import AgentTurn
 
 load_dotenv()
 
-FIREWORKS_API_KEY_ENV_VAR = "FIREWORKS_API_KEY"
-FIREWORKS_BASE_URL = "https://api.fireworks.ai/inference/v1"
 
-
-class FireworksLLM:
+class LLM:
     """Fireworks chat client that turns every call into a timed, costed AgentTurn."""
-
-    def __init__(self, api_key: str | None = None):
-        self._client = OpenAI(
-            api_key=api_key or os.environ.get(FIREWORKS_API_KEY_ENV_VAR),
-            base_url=FIREWORKS_BASE_URL,
-        )
 
     def chat(self, messages: list[dict], model: str = DEFAULT_MODEL, **kwargs) -> AgentTurn:
         """Send a chat completion request. Extra kwargs (temperature, tools, ...) pass through."""
         model_config = get_model(model)
 
+        _client = OpenAI(
+            api_key=os.environ.get(model_config.api_key_env),
+            base_url=model_config.base_url,
+        )
+
         start = time.perf_counter()
-        completion = self._client.chat.completions.create(
+        completion = _client.chat.completions.create(
             model=model_config.id,
             messages=messages,
             **kwargs,

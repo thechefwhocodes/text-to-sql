@@ -1,45 +1,70 @@
 """
 Turn types that make up a conversation.
 
-A conversation is just a list of Turns — one entry per user message, tool
-call, or model response. Every turn carries a `content` field (the text that
-becomes part of the prompt); turn-specific metadata (cost, tool args, ...)
-rides alongside it but is stripped out by `to_messages()` before a
-conversation is sent to the LLM.
+A conversation is just a list of Turns — one entry per system prompt, user
+message, model response, or tool result. Turn is the interface: every subclass
+implements `to_message`, which renders it into the shape the chat API expects.
 """
 
-from dataclasses import dataclass, field
-from typing import Any, ClassVar, Literal, Optional, TypedDict
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, ClassVar, Literal
 
 from openai.types.chat import ChatCompletion
 
 from src.models import ModelConfig
 
-Role = Literal["user", "assistant", "tool"]
+SYSTEM_ROLE = "system"
+USER_ROLE = "user"
+ASSISTANT_ROLE = "assistant"
+TOOL_ROLE = "tool"
+
+Role = Literal[SYSTEM_ROLE, USER_ROLE, ASSISTANT_ROLE, TOOL_ROLE]
 
 
-@dataclass
-class Turn(TypedDict):
-    """Base type. Don't instantiate directly — use one of the subclasses below."""
-    role: Role
+class Turn(ABC):
+    """Base type every turn implements. Don't instantiate directly."""
+
+    role: ClassVar[Role]
+
+    @abstractmethod
+    def to_message(self) -> dict:
+        return {"role": self.role, "content": self.content}
+
+
+class SystemTurn(Turn):
+    """The instructions and schema. Always the first turn in a conversation."""
     content: str
+    role: ClassVar[Role] = SYSTEM_ROLE
 
 
-@dataclass
 class UserTurn(Turn):
-    role: Role = "user"
+    """A question typed by the user."""
+    content: str
+    role: ClassVar[Role] = USER_ROLE
 
 
 @dataclass
 class AgentTurn(Turn):
-    """The LLM's own turn, plus the call stats we track it with."""
-
+    raw_message: Any
     model: str
     latency_s: float
     total_tokens: int
     cost_usd: float
-    role: ClassVar[Role] = "assistant"
-    raw: Optional[Any]
+    role: ClassVar[Role] = ASSISTANT_ROLE
+
+    @property
+    def content(self) -> str | None:
+        """The model's text. None when it answered with a tool call instead."""
+        return self.raw_message.content
+
+    @property
+    def tool_calls(self) -> list | None:
+        """The tool calls the model made, or None when it replied with text."""
+        return self.raw_message.tool_calls
+
+    def to_message(self) -> dict:
+        return {"role": self.role, "content": self.raw_message}
 
     @classmethod
     def from_completion(
@@ -51,18 +76,33 @@ class AgentTurn(Turn):
     ) -> "AgentTurn":
         usage = completion.usage
         return cls(
-            content=completion.choices[0].message.content,
+            raw_message=completion.choices[0].message,
             model=model,
             latency_s=latency_s,
             total_tokens=usage.total_tokens,
             cost_usd=model_config.cost(usage.prompt_tokens, usage.completion_tokens),
-            raw=completion,
         )
+
+
+@dataclass
+class ToolTurn(Turn):
+    """The result of a tool call, reported back to the model."""
+
+    tool_call_id: str
+    content: str
+    role: ClassVar[Role] = TOOL_ROLE
+
+    def to_message(self) -> dict:
+        return {
+            "role": self.role,
+            "tool_call_id": self.tool_call_id,
+            "content": self.content,
+        }
 
 
 Conversation = list[Turn]
 
 
-def to_messages(conversation: Conversation) -> list[TypedDict]:
-    """Strip turn metadata down to the {role, content} shape the LLM API expects."""
-    return [{"role": turn.role, "content": turn.content} for turn in conversation]
+def to_messages(conversation: Conversation) -> list:
+    """Render a conversation into the messages list the LLM API expects."""
+    return [turn.to_message() for turn in conversation]

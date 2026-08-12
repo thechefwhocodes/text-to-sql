@@ -1,0 +1,42 @@
+{
+  "q_001": {
+    "sql": "SELECT g.Name AS Genre, SUM(il.UnitPrice * il.Quantity) AS TotalSales\nFROM InvoiceLine il\nJOIN Track t ON il.TrackId = t.TrackId\nJOIN Genre g ON t.GenreId = g.GenreId\nGROUP BY g.GenreId, g.Name\nORDER BY TotalSales DESC\nLIMIT 5;",
+    "answer": "The five best\u2011selling genres are:\n\n- Rock \u2013\u202f$826.65  \n- Latin \u2013\u202f$382.14  \n- Metal \u2013\u202f$261.36  \n- Alternative &\u202fPunk \u2013\u202f$241.56  \n- TV Shows \u2013\u202f$93.53"
+  },
+  "q_002": {
+    "sql": "SELECT Album.Title FROM Album JOIN Artist ON Album.ArtistId = Artist.ArtistId WHERE Artist.Name = 'AC/DC';",
+    "answer": "The albums by **AC/DC** are:\n\n- *For Those About To Rock We Salute You*  \n- *Let There Be Rock*"
+  },
+  "q_003": {
+    "sql": "SELECT FirstName || ' ' || LastName AS Name, Email FROM Customer WHERE Country = 'Brazil';",
+    "answer": "The Brazilian customers are:\n\n- Lu\u00eds Gon\u00e7alves \u2013 luisg@embraer.com.br  \n- Eduardo Martins \u2013 eduardo@woodstock.com.br  \n- Alexandre Rocha \u2013 alero@uol.com.br  \n- Roberto Almeida \u2013 roberto.almeida@riotur.gov.br  \n- Fernanda Ramos \u2013 fernadaramos4@uol.com.br"
+  },
+  "q_004": {
+    "sql": "SELECT m.Name AS MediaType, COUNT(t.TrackId) AS TrackCount\nFROM Track t\nJOIN MediaType m ON t.MediaTypeId = m.MediaTypeId\nGROUP BY t.MediaTypeId\nORDER BY TrackCount DESC\nLIMIT 1;",
+    "answer": "The most popular media type is **\u201cMPEG audio file\u201d** with **3,034 tracks**."
+  },
+  "q_005": {
+    "sql": "SELECT e.EmployeeId, e.FirstName || ' ' || e.LastName AS EmployeeName, COUNT(c.CustomerId) AS CustomerCount\nFROM Employee e\nJOIN Customer c ON c.SupportRepId = e.EmployeeId\nGROUP BY e.EmployeeId\nORDER BY CustomerCount DESC\nLIMIT 1;",
+    "answer": "Jane\u202fPeacock has the most customers assigned to her, with **21** customers."
+  },
+  "q_006": {
+    "sql": "SELECT p.PlaylistId, p.Name, COUNT(pt.TrackId) AS TrackCount\nFROM Playlist p LEFT JOIN PlaylistTrack pt ON p.PlaylistId = pt.PlaylistId\nGROUP BY p.PlaylistId, p.Name\nORDER BY p.PlaylistId;",
+    "answer": "Here\u2019s how many tracks each playlist contains:\n\n- Music (Playlist\u202f1) \u2013 3,290 tracks  \n- Movies (Playlist\u202f2) \u2013 0 tracks  \n- TV Shows (Playlist\u202f3) \u2013 213 tracks  \n- Audiobooks (Playlist\u202f4) \u2013 0 tracks  \n- 90\u2019s Music (Playlist\u202f5) \u2013 1,477 tracks  \n- Audiobooks (Playlist\u202f6) \u2013 0 tracks  \n- Movies (Playlist\u202f7) \u2013 0 tracks  \n- Music (Playlist\u202f8) \u2013 3,290 tracks  \n- Music Videos (Playlist\u202f9) \u2013 1 track  \n- TV Shows (Playlist\u202f10) \u2013 213 tracks  \n- Brazilian Music (Playlist\u202f11) \u2013 39 tracks  \n- Classical (Playlist\u202f12) \u2013 75 tracks  \n- Classical\u202f101\u202f\u2013\u202fDeep Cuts (Playlist\u202f13) \u2013 25 tracks  \n- Classical\u202f101\u202f\u2013\u202fNext Steps (Playlist\u202f14) \u2013 25 tracks  \n- Classical\u202f101\u202f\u2013\u202fThe Basics (Playlist\u202f15) \u2013 25 tracks  \n- Grunge (Playlist\u202f16) \u2013 15 tracks  \n- Heavy Metal Classic (Playlist\u202f17) \u2013 26 tracks  \n- On\u2011The\u2011Go\u202f1 (Playlist\u202f18) \u2013 1 track"
+  },
+  "q_007": {
+    "sql": "SELECT SUM(Total) AS total_revenue_2021 FROM Invoice WHERE strftime('%Y', InvoiceDate) = '2021';",
+    "answer": "The total revenue generated in\u202f2021 was **$449.46**."
+  },
+  "q_008": {
+    "sql": "SELECT BillingCountry, ROUND(AVG(Total), 2) AS AvgTotal FROM Invoice GROUP BY BillingCountry ORDER BY AvgTotal DESC;",
+    "answer": "The average invoice total by billing country, from highest to lowest, is:\n\n- Chile\u202f\u2013\u202f$6.66  \n- Ireland\u202f\u2013\u202f$6.52  \n- Hungary\u202f\u2013\u202f$6.52  \n- Czech Republic\u202f\u2013\u202f$6.45  \n- Austria\u202f\u2013\u202f$6.09  \n- Finland\u202f\u2013\u202f$5.95  \n- Netherlands\u202f\u2013\u202f$5.80  \n- India\u202f\u2013\u202f$5.79  \n- USA\u202f\u2013\u202f$5.75  \n- Norway\u202f\u2013\u202f$5.66  \n- Germany\u202f\u2013\u202f$5.59  \n- France\u202f\u2013\u202f$5.57  \n- Sweden\u202f\u2013\u202f$5.52  \n- Portugal\u202f\u2013\u202f$5.52  \n- Canada\u202f\u2013\u202f$5.43  \n- Brazil\u202f\u2013\u202f$5.43  \n- United Kingdom\u202f\u2013\u202f$5.37  \n- Spain\u202f\u2013\u202f$5.37  \n- Poland\u202f\u2013\u202f$5.37  \n- Italy\u202f\u2013\u202f$5.37  \n- Denmark\u202f\u2013\u202f$5.37  \n- Belgium\u202f\u2013\u202f$5.37  \n- Australia\u202f\u2013\u202f$5.37  \n- Argentina\u202f\u2013\u202f$5.37"
+  },
+  "q_009": {
+    "sql": "SELECT CustomerId, CustomerName, TotalSpending,\n       RANK() OVER (ORDER BY TotalSpending DESC) AS SpendingRank\nFROM (\n   SELECT c.CustomerId,\n          c.FirstName || ' ' || c.LastName AS CustomerName,\n          SUM(i.Total) AS TotalSpending\n   FROM Customer c\n   JOIN Invoice i ON c.CustomerId = i.CustomerId\n   GROUP BY c.CustomerId\n) t\nORDER BY TotalSpending DESC\nLIMIT 5;",
+    "answer": "The top five spenders are:\n\n| Rank | Customer | Total spending |\n|------|----------|----------------|\n| 1 | Helena Hol\u00fd (Customer\u202f6) | **$49.62** |\n| 2 | Richard Cunningham (Customer\u202f26) | **$47.62** |\n| 3 | Luis Rojas (Customer\u202f57) | **$46.62** |\n| 4 | Ladislav Kov\u00e1cs (Customer\u202f45) | **$45.62** |\n| 4 | Hugh O'Reilly (Customer\u202f46) | **$45.62** |\n\nRanks are calculated using a descending\u202fRANK() window function on each customer\u2019s sum of invoice totals."
+  },
+  "q_010": {
+    "sql": "SELECT a.Name AS ArtistName, COUNT(DISTINCT t.GenreId) AS GenreCount\nFROM Artist a\nJOIN Album al ON al.ArtistId = a.ArtistId\nJOIN Track t ON t.AlbumId = al.AlbumId\nWHERE t.GenreId IS NOT NULL\nGROUP BY a.ArtistId, a.Name\nHAVING COUNT(DISTINCT t.GenreId) > 3\nORDER BY GenreCount DESC;",
+    "answer": "Iron Maiden has tracks in more than three genres, appearing in **4 distinct genres**."
+  }
+}

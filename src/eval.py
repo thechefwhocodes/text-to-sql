@@ -1,15 +1,6 @@
-"""Evaluate our agent against the customer's baseline over the dev question set.
-
+"""
+Evaluate our agent against the customer's baseline over the dev question set.
 Run with: python -m src.eval
-
-Every dev question is sent through our agent (GPT-OSS-120B, the default model)
-and through the customer's baseline prompt (GPT-5.4), RUNS times each — accuracy
-on 10 questions is noisy enough that a single run isn't reliable. Baseline
-answers are cached to data/eval_cache.json since the customer's prompt doesn't
-change between runs, so re-running this script doesn't re-charge for them.
-
-Results (accuracy, latency, cost/query, plus which questions were missed and
-how often) are printed and written into README.md.
 """
 
 import json
@@ -60,7 +51,6 @@ def is_correct(answer: Answer, expected: list[dict]) -> bool:
 @dataclass
 class Score:
     """One question's result within one run."""
-
     question_id: str
     correct: bool
     latency_s: float
@@ -135,7 +125,6 @@ def _from_cache(entry: dict) -> Answer:
 @dataclass
 class Summary:
     """Metrics for one arm (agent or baseline), aggregated across all runs."""
-
     name: str
     num_questions: int
     num_runs: int

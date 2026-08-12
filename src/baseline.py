@@ -6,7 +6,7 @@ import sqlite3
 
 from src.agent import Answer
 from src.llm import LLM
-from src.tools import RunSQLTool, run_sql
+from src.tools import RunSQLTool
 from src.turns import USER_ROLE
 
 BASELINE_PROMPT = "Convert this question to SQL:\n{question}"

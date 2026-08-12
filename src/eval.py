@@ -125,8 +125,6 @@ def main() -> None:
     print(f"\nWrote {ANSWERS_PATH}")
 
     cache = json.loads(CACHE_PATH.read_text()) if CACHE_PATH.exists() else {}
-    # Earlier cache entries were keyed by question id alone (a single run). Reuse
-    # that as run 0 so this script doesn't re-charge for answers we already have.
     for q in questions:
         if q["id"] in cache and f"{q['id']}_0" not in cache:
             cache[f"{q['id']}_0"] = cache[q["id"]]

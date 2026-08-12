@@ -1,0 +1,42 @@
+{
+  "q_001": {
+    "sql": "SELECT g.Name as Genre, SUM(il.UnitPrice * il.Quantity) as TotalSales\nFROM InvoiceLine il\nJOIN Track t ON il.TrackId = t.TrackId\nJOIN Genre g ON t.GenreId = g.GenreId\nGROUP BY g.GenreId\nORDER BY TotalSales DESC\nLIMIT 5;",
+    "answer": "**Top 5 Best\u2011Selling Genres (by total sales)**  \n\n| Rank | Genre                | Total Sales (USD) |\n|------|----------------------|-------------------|\n| 1    | Rock                 | **$826.65** |\n| 2    | Latin                | **$382.14** |\n| 3    | Metal                | **$261.36** |\n| 4    | Alternative & Punk  | **$241.56** |\n| 5    | TV Shows             | **$93.53** |\n\nThese figures are the sum of `UnitPrice \u00d7 Quantity` for all invoice lines containing tracks within each genre."
+  },
+  "q_002": {
+    "sql": "SELECT Album.Title FROM Album JOIN Artist ON Album.ArtistId = Artist.ArtistId WHERE Artist.Name = 'AC/DC' ORDER BY Album.Title;",
+    "answer": "Here are the albums by **AC/DC** in the database:\n\n| Album Title |\n|-------------|\n| For Those About To Rock We Salute You |\n| Let There Be Rock |"
+  },
+  "q_003": {
+    "sql": "SELECT FirstName, LastName, Email FROM Customer WHERE Country = 'Brazil';",
+    "answer": "Here are the customers whose **Country** is Brazil, along with their email addresses:\n\n| First Name | Last Name | Email |\n|------------|-----------|------------------------------|\n| Lu\u00eds | Gon\u00e7alves | luisg@embraer.com.br |\n| Eduardo | Martins | eduardo@woodstock.com.br |\n| Alexandre | Rocha | alero@uol.com.br |\n| Roberto | Almeida | roberto.almeida@riotur.gov.br |\n| Fernanda | Ramos | fernadaramos4@uol.com.br |"
+  },
+  "q_004": {
+    "sql": "SELECT m.Name AS MediaType, COUNT(t.TrackId) AS TrackCount\nFROM Track t\nJOIN MediaType m ON t.MediaTypeId = m.MediaTypeId\nGROUP BY m.MediaTypeId\nORDER BY TrackCount DESC\nLIMIT 1;",
+    "answer": "The most popular media type, based on the number of tracks, is **\u201cMPEG audio file\u201d** with **3,034 tracks**."
+  },
+  "q_005": {
+    "sql": "SELECT e.EmployeeId, e.FirstName, e.LastName, COUNT(c.CustomerId) AS CustomerCount\nFROM Employee e\nJOIN Customer c ON c.SupportRepId = e.EmployeeId\nGROUP BY e.EmployeeId\nORDER BY CustomerCount DESC\nLIMIT 1;",
+    "answer": "**Employee with the most customers**\n\n| EmployeeId | FirstName | LastName | Number of Customers |\n|------------|-----------|----------|----------------------|\n| 3          | Jane      | Peacock  | 21 |\n  \nJane Peacock (EmployeeId\u202f3) has the highest number of customers assigned to her, with **21** customers."
+  },
+  "q_006": {
+    "sql": "SELECT p.PlaylistId, p.Name, COUNT(pt.TrackId) AS TrackCount\nFROM Playlist p\nLEFT JOIN PlaylistTrack pt ON p.PlaylistId = pt.PlaylistId\nGROUP BY p.PlaylistId, p.Name\nORDER BY p.PlaylistId;",
+    "answer": "Here is the number of tracks in each playlist (including those with none):\n\n| PlaylistId | Name                              | TrackCount |\n|------------|-----------------------------------|------------|\n| 1          | Music                             | 3\u202f290 |\n| 2          | Movies                            | 0 |\n| 3          | TV Shows                          | 213 |\n| 4          | Audiobooks                        | 0 |\n| 5          | 90\u2019s Music                        | 1\u202f477 |\n| 6          | Audiobooks                        | 0 |\n| 7          | Movies                            | 0 |\n| 8          | Music                             | 3\u202f290 |\n| 9          | Music Videos                      | 1 |\n| 10         | TV Shows                          | 213 |\n| 11         | Brazilian Music                  | 39 |\n| 12         | Classical                         | 75 |\n| 13         | Classical 101 - Deep Cuts         | 25 |\n| 14         | Classical 101 - Next Steps        | 25 |\n| 15         | Classical 101 - The Basics        | 25 |\n| 16         | Grunge                            | 15 |\n| 17         | Heavy Metal Classic               | 26 |\n| 18         | On\u2011The\u2011Go 1                        | 1 |\n\nThe counts were obtained by left\u2011joining `Playlist` with `PlaylistTrack` and aggregating the number of associated `TrackId`s for each playlist."
+  },
+  "q_007": {
+    "sql": "SELECT SUM(Total) as total_revenue_2021 FROM Invoice WHERE strftime('%Y', InvoiceDate) = '2021';",
+    "answer": "The total revenue generated in **2021** was **$449.46**. This sum is based on the `Total` amounts from all invoices whose `InvoiceDate` falls within the year 2021."
+  },
+  "q_008": {
+    "sql": "SELECT BillingCountry, ROUND(AVG(Total), 2) AS AverageTotal\nFROM Invoice\nGROUP BY BillingCountry\nORDER BY AverageTotal DESC;",
+    "answer": "**Average invoice total by billing country (highest to lowest)**  \n\n| Billing Country | Average Total (USD) |\n|-----------------|---------------------|\n| Chile | 6.66 |\n| Ireland | 6.52 |\n| Hungary | 6.52 |\n| Czech Republic | 6.45 |\n| Austria | 6.09 |\n| Finland | 5.95 |\n| Netherlands | 5.80 |\n| India | 5.79 |\n| USA | 5.75 |\n| Norway | 5.66 |\n| Germany | 5.59 |\n| France | 5.57 |\n| Sweden | 5.52 |\n| Portugal | 5.52 |\n| Canada | 5.43 |\n| Brazil | 5.43 |\n| United Kingdom | 5.37 |\n| Spain | 5.37 |\n| Poland | 5.37 |\n| Italy | 5.37 |\n| Denmark | 5.37 |\n| Belgium | 5.37 |\n| Australia | 5.37 |\n| Argentina | 5.37 |\n\nThese figures are the average of the `Total` column for each `BillingCountry` in the **Invoice** table, rounded to two decimal places, and ordered from the highest average to the lowest."
+  },
+  "q_009": {
+    "sql": "WITH cust_spending AS (\n SELECT c.CustomerId,\n        c.FirstName || ' ' || c.LastName AS CustomerName,\n        IFNULL(SUM(i.Total),0) AS TotalSpending\n FROM Customer c\n LEFT JOIN Invoice i ON c.CustomerId = i.CustomerId\n GROUP BY c.CustomerId\n)\nSELECT CustomerId, CustomerName, TotalSpending,\n       RANK() OVER (ORDER BY TotalSpending DESC) AS Rank\nFROM cust_spending\nORDER BY TotalSpending DESC\nLIMIT 5;",
+    "answer": "**Top 5 customers by total spending**\n\n| Rank | CustomerId | Customer Name | Total Spending (\u20ac) |\n|------|------------|---------------|--------------------|\n| 1 | 6 | Helena Hol\u00fd | 49.62 |\n| 2 | 26 | Richard Cunningham | 47.62 |\n| 3 | 57 | Luis Rojas | 46.62 |\n| 4 | 45 | Ladislav Kov\u00e1cs | 45.62 |\n| 4 | 46 | Hugh O'Reilly | 45.62 |\n\n*Ranks are based on descending total spending (ties receive the same rank). The list shows the five customers who have spent the most overall.*"
+  },
+  "q_010": {
+    "sql": "SELECT ar.Name as ArtistName, COUNT(DISTINCT t.GenreId) as GenreCount\nFROM Artist ar\nJOIN Album al ON al.ArtistId = ar.ArtistId\nJOIN Track t ON t.AlbumId = al.AlbumId\nWHERE t.GenreId IS NOT NULL\nGROUP BY ar.ArtistId\nHAVING COUNT(DISTINCT t.GenreId) > 3\nORDER BY GenreCount DESC, ArtistName;",
+    "answer": "**Artists with tracks spanning more than three different genres**\n\n| Artist Name   | Distinct Genres |\n|---------------|-----------------|\n| Iron Maiden   | 4 |"
+  }
+}

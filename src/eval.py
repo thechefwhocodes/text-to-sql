@@ -18,7 +18,7 @@ from src.utils import load_db
 
 QUESTIONS_PATH = Path("data/dev_questions_with_answers.json")
 CACHE_PATH = Path("data/eval_cache.json")
-ANSWERS_PATH = Path("dev_answers.json")
+ANSWERS_PATH = Path("data/dev_answers.json")
 
 AGENT_MODEL = "gpt-oss-120b"
 BASELINE_MODEL = "gpt-5.4"

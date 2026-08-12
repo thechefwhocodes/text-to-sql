@@ -33,19 +33,32 @@ RESULTS_END = "<!-- eval-results:end -->"
 
 
 def is_correct(answer: Answer, expected: list[dict]) -> bool:
-    """Same values as the gold answer — column names, float noise, and row order
-    are all ignored, since many correct queries shape a result differently."""
+    """Same values as the gold answer — column names, column count, float
+    noise, and row order are all ignored, since many correct queries shape a
+    result differently."""
     if answer.rows is None:
         return False
 
-    def cell(v):
+    actual = answer.rows.to_dict("records")
+    if len(actual) != len(expected):
+        return False
+
+    def cell(v) -> str:
         is_number = isinstance(v, (int, float)) and not isinstance(v, bool)
         return str(round(v, 2)) if is_number else str(v)
 
-    def bag(records):
-        return sorted(tuple(cell(v) for v in row.values()) for row in records)
+    def words(row: dict) -> set[str]:
+        return {word for v in row.values() for word in cell(v).split()}
 
-    return bag(answer.rows.to_dict("records")) == bag(expected)
+    remaining = list(actual)
+    for expected_row in expected:
+        needed = words(expected_row)
+        match = next((row for row in remaining if needed <= words(row)), None)
+        if match is None:
+            return False
+        remaining.remove(match)
+
+    return True
 
 
 @dataclass

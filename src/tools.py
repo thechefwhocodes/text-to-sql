@@ -1,10 +1,4 @@
-"""The tools the agent can call, and the code behind them.
-
-Tool is the interface: a name, a schema (to_definition), and a body (run). The
-schema and the code live on the same class so they can't drift apart, and the
-agent looks a tool up by name rather than hardcoding which one to call — that's
-what lets a second tool be added later without touching the agent loop.
-"""
+"""The tools the agent can call, and the code behind them."""
 
 import json
 import sqlite3
@@ -31,7 +25,7 @@ class Tool(ABC):
     defination: str
     parameters: BaseModel
 
-    def to_definition(self) -> dict:
+    def to_defination(self) -> dict:
         return {
             "type": "function",
             "function": {
@@ -63,7 +57,7 @@ class RunSQLTool(Tool):
     parameters = RunSQLArgs
 
     def run(self, conn: sqlite3.Connection, args: dict) -> ToolResult:
-        return self.run_sql(conn, args["sql"]) # handle the case where sql is not in the args
+        return self.run_sql(conn, args["sql"])
 
     def _check_sql(self, sql: str) -> None:
         """Only support a single read-only statement"""
@@ -105,5 +99,5 @@ def get_tool(name: str) -> Tool:
     return TOOLS[name]
 
 
-def tool_definitions() -> list[dict]:
-    return [tool.to_definition() for tool in TOOLS.values()]
+def tool_definations() -> list[dict]:
+    return [tool.to_defination() for tool in TOOLS.values()]

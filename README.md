@@ -1,106 +1,50 @@
-# Fireworks AI Field Engineering: Text-to-SQL
+# Text-to-SQL Agent
 
-This take-home is meant to mirror part of the AI Field Engineer role: supporting customers in their journey to build GenAI applications on Fireworks.
+An interactive CLI that turns plain-English questions into SQL, runs them against a database, and explains the results back to you.
 
-In this exercise, you should approach the problem like a Fireworks engineer supporting a customer who needs a text-to-SQL agent that can run as an interactive CLI.
+## Context
 
-## What We're Looking For
+GitLab wants an agentic BI CLI: point it at a database, ask questions in plain English, get SQL + results back — including follow-ups. Their prototype (one bare prompt, GPT-5.4) had three problems: **wrong SQL** (hallucinated columns/tables), **too slow** (~7s, need <3s P50), and **too expensive** at their projected scale (~30,000 queries/day). This repo is the proof-of-concept addressing all three, plus the evidence that it actually works.
 
-1. **Customer-oriented problem solving**: translate the customer's pain points into a working system that demonstrates a working proof of concept.
-2. **CLI and agent design**: build an interactive terminal agent that converts natural language to SQL and returns results.
-3. **Self-validation**: show that you checked your work against the provided test set and know where the system still fails.
-4. **Code quality**: write clean, readable Python that another engineer can understand and extend.
-5. **Communication**: draft a clear response email to the customer explaining what you built, how you validated it, and what comes next.
+## Quick Start
 
-## Customer Scenario
-
-**From:** Raul Jimenez <raul.j@gitlab.com>
-**To:** Solutions Team <solutions@fireworks.ai>
-**Subject:** Help Needed: Agentic BI CLI Product for GitLab Customers
-
-Hi Fireworks team,
-
-Following up on our conversation about a new product we're building. We want to ship an agentic business intelligence CLI as part of the GitLab platform — a tool that lets any developer or data practitioner query their database in natural language directly from the terminal. The idea is that customers plug in their own database and start asking questions immediately, no setup beyond a connection string.
-
-At our current scale, we're projecting roughly 1,000 active users in the first cohort, running about 30 queries per day each.
-
-**Our current state:**
-
-We built a quick prototype using a simple prompt:
-
-```
-Convert this question to SQL:
-{question}
+```bash
+./setup.sh                          # downloads the sample database
+uv sync                             # installs dependencies
+export FIREWORKS_API_KEY=<your-key>
+uv run cli
 ```
 
-We tested it with GPT-5.4 and the results were mixed. Sometimes it works, sometimes it hallucinates table names, produces invalid SQL, or returns wrong results. We don't have a systematic way to measure whether it's "good enough" to ship to customers.
-
-**Where we're stuck:**
-
-1. **Quality**: The accuracy is not where we need it. We're seeing hallucinated column names, incorrect JOINs, and SQL that doesn't execute. We can't ship a product to customers where the SQL is wrong — trust is everything for a customer-facing feature.
-
-2. **Latency**: Our current prototype takes about 7 seconds end-to-end (from the user hitting enter to seeing results). For an interactive CLI experience, we need this under 3 seconds P50 end-to-end. Developers won't adopt a tool that feels sluggish.
-
-3. **Cost**: With ~1,000 users at ~30 queries/day, we're looking at roughly 30,000 queries daily — and that's just the first cohort. At GPT-5.4 pricing, the unit economics don't work for a platform feature. We need to explore open-source alternatives that can deliver comparable quality at a fraction of the cost so this is sustainable as we scale.
-
-**What we're envisioning:**
-
-An interactive CLI that a user can launch from their terminal, point at any database, and ask questions in natural language. They get back the SQL query plus results, and can ask follow-up questions to refine or explore further.
-
-**What we need from you:**
-
-1. A working proof-of-concept CLI that demonstrates this is viable with open-source models on Fireworks
-2. Evidence that you've validated the PoC against real questions
-3. A clear read on what works, what doesn't, and what you'd tackle next
-
-We're providing a sample database and a set of test questions so you can build and validate against real data.
-
-Looking forward to your recommendations.
-
-Best,
-Raul J.
-Director of Data Platform, GitLab
-
----
-
-## Project Structure
+Then just type a question:
 
 ```
-.
-├── README.md
-├── setup.sh
-├── pyproject.toml
-├── uv.lock
-├── src/
-│   ├── cli.py
-│   ├── agent.py
-│   └── utils.py
-└── data/
-    ├── Chinook.db
-    ├── dev_questions.json
-    ├── dev_questions_with_answers.json
-    └── dev_answers_example.json
+> What are the top 5 best-selling genres by total sales?
 ```
 
-## Data Overview
+You'll see the SQL it ran, the raw rows, and a plain-English summary. Ask a follow-up ("now just show me the top 1") and it remembers the conversation. Type `exit` or `quit` to leave.
 
-The sample database is the Chinook database — a SQLite database modeling a digital music store with 11 tables:
+## Environment Variables
 
-| Table | Description |
-|-------|-------------|
-| `Artist` | Music artists |
-| `Album` | Albums linked to artists |
-| `Track` | Individual tracks (linked to album, genre, media type) |
-| `Genre` | Music genre classification |
-| `MediaType` | Media format classification |
-| `Customer` | Customer information with billing address |
-| `Employee` | Support representatives |
-| `Invoice` | Sales invoices with billing details |
-| `InvoiceLine` | Line items — track, unit price, quantity |
-| `Playlist` | Curated track collections |
-| `PlaylistTrack` | Links playlists to tracks |
+| Variable | Required for | Why |
+|---|---|---|
+| `FIREWORKS_API_KEY` | The CLI, and the "our agent" half of `python -m src.eval` | Our agent runs on `gpt-oss-120b`, an open-source model hosted on Fireworks. |
+| `OPENAI_API_KEY` | Only the baseline half of `python -m src.eval` | The baseline is the customer's original prompt run on `gpt-5.4`, so we have something to compare against. If this isn't set, `eval.py` just skips that comparison and still reports our agent's results. |
 
-Use the provided utility functions to explore the schema:
+## What I Built
+
+Two things live side by side so we can compare them:
+
+- **[`src/baseline.py`](src/baseline.py)** — the customer's original prototype: one prompt, no schema, no retries — `Convert this question to SQL: {question}` — then run whatever SQL comes back.
+- **[`src/agent.py`](src/agent.py)** — our agent. Three changes from the baseline:
+  1. **It sees the database schema.** The full `CREATE TABLE` statements go into the system prompt, so it isn't guessing column names.
+  2. **It calls SQL as a tool, not free text.** Instead of pasting SQL into its reply, the model calls a `run_sql` tool ([`src/tools.py`](src/tools.py)). If the query fails (bad table name, syntax error, etc.) or the tool call's JSON arguments come back slightly malformed, the error is handed back to the model as a message, and it gets more tries to fix it (4 steps total) — instead of crashing or returning garbage.
+  3. **It remembers the conversation.** Follow-up questions reuse the same message history, so "now just show me the top 1" knows what "the top 1" refers to.
+
+The system prompt also tells the model to only select the columns it actually needs, instead of defaulting to `SELECT *`.
+
+## Database
+
+The sample database is Chinook — a SQLite database modeling a digital music store, with tables like `Artist`, `Album`, `Track`, `Customer`, `Invoice`, and `Playlist`. Explore it yourself:
 
 ```python
 from src.utils import load_db, query_db, print_table_schema
@@ -110,124 +54,17 @@ print_table_schema(conn)
 results = query_db(conn, "SELECT * FROM Artist LIMIT 5")
 ```
 
-## Your Task
-
-Build an interactive CLI agent that converts natural language questions to SQL and executes them against the database. Your goal is to demonstrably improve on the customer's baseline prompt (`Convert this question to SQL: {question}`) in quality and reliability.
-
-Part of the challenge is deciding *how* to build this: how the agent understands the database schema, what happens when generated SQL fails, whether tools or structured outputs help, and how the conversation context should be used. These are design decisions we want to see you reason through.
-
-### CLI Requirements
-
-The CLI should be runnable via:
+## How I Validated It
 
 ```bash
-uv run cli
+uv run python -m src.eval
 ```
 
-Or, if you prefer to activate the environment manually:
+This runs both the agent and the baseline over all 10 questions in `data/dev_questions_with_answers.json`, **3 times each** — a single run is noisy, since a model can get the exact same question right once and wrong the next time. It checks each answer's result rows against the gold answer, ignoring things that don't actually matter: row order, column names, and minor float rounding.
 
-```bash
-python -m src.cli
-```
+It also tolerates a query shaping its result differently than gold, as long as the same information is in there. For example — this was a real bug I caught and fixed while building this — a query returning `FirstName` + `LastName` in two separate columns still counts as correct against a gold answer that has one combined `CustomerName` column, as long as the underlying names match. Without that, a correct answer could get marked wrong just because it was shaped differently, which would make the self-validation numbers a measure of the grading script, not the agent.
 
-This should launch an interactive terminal session where the user can:
-- Type a natural language question
-- See the generated SQL query
-- See the query results
-- Ask follow-up questions or refine queries
-- Type `exit` or `quit` to end the session
-
-### Development Questions
-
-`data/dev_questions.json` contains 10 development questions. `data/dev_questions_with_answers.json` includes the gold-standard SQL and expected results so you can evaluate your system locally.
-
-Run your agent against each of the 10 questions and record the outputs in `dev_answers.json`. The dev answer key is public so you can build and iterate against it.
-
-## Things to Consider
-
-- What happens when the generated SQL doesn't execute?
-- How does the agent know about the database it's querying?
-- What are the trade-offs between different agent architectures for this problem?
-- What are the trade-offs between open-source and proprietary models for this use case?
-- How should the CLI handle follow-up questions and conversation context?
-
-## Required Deliverables
-
-1. **ZIP file** shared via Google Drive containing your implementation
-2. **README** in your submission with exact run instructions, required environment variables, and setup steps
-3. **Working CLI** runnable via `uv run cli` (or `python -m src.cli`)
-4. **`dev_answers.json`** with your system's outputs for the 10 development questions
-5. **Email response** to Raul — a short, professional email with:
-   - What you built and key findings
-   - How you performed against the 10 dev questions
-   - How you validated your PoC
-   - What you'd tackle next and the scope to move this forward
-
-## `dev_answers.json` Format
-
-Copy `data/dev_answers_example.json` and fill in your answers:
-
-```json
-{
-  "q_001": {
-    "sql": "SELECT g.Name, SUM(il.UnitPrice * il.Quantity) ...",
-    "answer": "Rock ($826.65), Latin ($382.14), ..."
-  },
-  "q_002": {
-    "sql": "...",
-    "answer": "..."
-  }
-}
-```
-
-Include both the generated SQL and a human-readable summary of the results.
-
-## Submission Guidelines
-
-- Submit your ZIP via Google Drive within the deadline provided by your recruiter.
-- Please spend no more than ~**3 hours** on this assessment.
-- You may use any Fireworks model and any additional framework, library, or tool.
-- You may use the internet, documentation, third-party packages, and AI coding tools.
-- If you use AI assistance, mention how in your email response.
-- If you have questions during the assessment, reach out to your recruiter.
-
-**Note on scope:** We're more interested in your approach, thought process, and ability to make progress in a time-boxed manner than achieving perfect accuracy. A strong submission has a working agent, evidence of self-validation, and a clear email — not necessarily all three polished to perfection. Focus on demonstrating sound engineering judgment, clean code, and clear communication.
-
-## Getting Started
-
-Run the setup script to download the Chinook database:
-
-```bash
-./setup.sh
-```
-
-Then install dependencies and run the CLI:
-
-```bash
-uv sync
-export FIREWORKS_API_KEY=<your-key>
-uv run cli
-```
-
-Explore the database and dev questions, then start building.
-
-## Resources
-
-1. [Fireworks AI Model Library](https://fireworks.ai/models)
-2. [Fireworks AI Docs](https://docs.fireworks.ai)
-3. [Fireworks OpenAI SDK Compatibility](https://docs.fireworks.ai/getting-started/quickstart)
-
-## How We Will Review
-
-We will review your submission using:
-- Your system's accuracy on the public dev questions
-- The quality of the interactive CLI experience
-- Whether you validated your work and can articulate where the system still fails
-- The clarity and professionalism of your email to Raul
-- Code quality and readability
-
-**Note:** You will be invited to a follow-up live session where we will extend this project together. We'll discuss what it takes to ship to production and work through evaluation, testing, and performance metrics as a team. Come ready to walk through your code and extend it live.
-
+Results below refresh automatically each time you re-run the command above (the baseline's answers are cached in `data/eval_cache.json`, so re-running doesn't re-pay for GPT-5.4 calls). `data/dev_answers.json` — the required deliverable — is also rewritten each run, using the first of the 3 agent runs.
 
 <!-- eval-results:start -->
 ## Evaluation Results
@@ -238,26 +75,66 @@ _Auto-generated by `python -m src.eval` — do not edit by hand._
 
 | Arm | Accuracy | Avg Latency/query | Avg Cost/query | Est. $/day @ 30k queries |
 |---|---|---|---|---|
-| Our agent (gpt-oss-120b) | 70.0% | 1.76s | $0.00065 | $19.38 |
-| Baseline (gpt-5.4) | 43.3% | 1.34s | $0.00103 | $31.04 |
+| Our agent (gpt-oss-120b) | 100.0% | 1.77s | $0.00063 | $18.93 |
+| Baseline (gpt-5.4) | 46.7% | 1.34s | $0.00103 | $30.90 |
 
 ### Missed Questions
 
 **Our agent (gpt-oss-120b)**
 
-- `q_003` — wrong 1/3 runs: What are the names and email addresses of customers from Brazil?
-- `q_005` — wrong 3/3 runs: Which employee has the most customers assigned to them?
-- `q_006` — wrong 2/3 runs: How many tracks are there in each playlist?
-- `q_009` — wrong 3/3 runs: For each customer, what is their total spending and how does it rank compared to other customers? Show the top 5 customers by spending.
+_None — every question was answered correctly in every run._
 
 **Baseline (gpt-5.4)**
 
 - `q_002` — wrong 3/3 runs: List all albums by the artist 'AC/DC'.
 - `q_003` — wrong 3/3 runs: What are the names and email addresses of customers from Brazil?
 - `q_005` — wrong 3/3 runs: Which employee has the most customers assigned to them?
-- `q_006` — wrong 1/3 runs: How many tracks are there in each playlist?
 - `q_007` — wrong 3/3 runs: What is the total revenue generated in the year 2021?
 - `q_009` — wrong 3/3 runs: For each customer, what is their total spending and how does it rank compared to other customers? Show the top 5 customers by spending.
 - `q_010` — wrong 1/3 runs: Which artists have tracks in more than 3 different genres? List the artist name and the number of distinct genres.
 
 <!-- eval-results:end -->
+
+## Where It Still Fails
+
+- **Accuracy**: our agent got all 10 dev questions right in this run; the baseline missed 4 of 10 in every run (wrong column/table names it had to guess at) plus one it got right most of the time. That said, 10 questions is a small sample — a wrong guess here or there on a bigger set wouldn't be surprising, so "100%" should be read as "no failures found yet," not "solved."
+- **Latency**: our agent averages under 2s, well below the customer's ~7s baseline and inside the <3s P50 target — but that's an average across easy and hard questions. Whenever the first SQL attempt fails and the retry loop kicks in (up to 4 model calls total), that one question gets noticeably slower, so a harder question set would likely push the P50 closer to the limit.
+- **Scope**: the agent only supports a single read-only `SELECT`/`WITH` statement — no writes, no multiple statements. That's a deliberate safety choice, not a gap, but worth calling out.
+
+## What I'd Tackle Next
+
+- Grow the dev set past 10 questions, including some genuinely ambiguous ones, to get a more reliable accuracy number.
+- Track accuracy by question difficulty instead of one overall pass rate — some questions are inherently harder.
+- Try a couple of other open models on Fireworks to see if there's a better cost/latency/accuracy trade-off than `gpt-oss-120b`.
+- Add basic query safety limits (e.g. a row cap) before this goes anywhere near production traffic.
+
+## Project Structure
+
+```
+.
+├── README.md
+├── setup.sh
+├── pyproject.toml
+├── src/
+│   ├── cli.py          # interactive CLI entry point
+│   ├── agent.py        # our tool-calling text-to-SQL agent
+│   ├── baseline.py     # the customer's original one-shot prompt
+│   ├── tools.py        # the run_sql tool the agent can call
+│   ├── llm.py          # thin wrapper around the OpenAI-compatible chat API
+│   ├── models.py       # model registry (gpt-oss-120b, gpt-5.4) with pricing
+│   ├── turns.py        # conversation turn types
+│   ├── eval.py         # scores agent vs. baseline over the dev questions
+│   └── utils.py        # DB connection + schema helpers
+├── tests/              # unit tests
+└── data/
+    ├── Chinook.db
+    ├── dev_questions_with_answers.json   # dev questions + gold SQL/answers
+    ├── dev_answers.json                  # our agent's answers (deliverable)
+    └── eval_cache.json                   # cached baseline answers
+```
+
+## Running Tests
+
+```bash
+uv run pytest
+```

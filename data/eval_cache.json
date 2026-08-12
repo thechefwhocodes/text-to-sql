@@ -1,31 +1,31 @@
 {
   "q_001_0": {
-    "text": "```sql\nSELECT\n  g.Name AS Genre,\n  SUM(il.UnitPrice * il.Quantity) AS TotalSales\nFROM InvoiceLine il\nJOIN Track t\n  ON il.TrackId = t.TrackId\nJOIN Genre g\n  ON t.GenreId = g.GenreId\nGROUP BY g.GenreId, g.Name\nORDER BY TotalSales DESC\nLIMIT 5;\n```",
-    "sql": "SELECT\n  g.Name AS Genre,\n  SUM(il.UnitPrice * il.Quantity) AS TotalSales\nFROM InvoiceLine il\nJOIN Track t\n  ON il.TrackId = t.TrackId\nJOIN Genre g\n  ON t.GenreId = g.GenreId\nGROUP BY g.GenreId, g.Name\nORDER BY TotalSales DESC\nLIMIT 5;",
+    "text": "```sql\nSELECT\n  g.Name AS genre,\n  SUM(il.UnitPrice * il.Quantity) AS total_sales\nFROM InvoiceLine il\nJOIN Track t\n  ON il.TrackId = t.TrackId\nJOIN Genre g\n  ON t.GenreId = g.GenreId\nGROUP BY g.GenreId, g.Name\nORDER BY total_sales DESC\nLIMIT 5;\n```",
+    "sql": "SELECT\n  g.Name AS genre,\n  SUM(il.UnitPrice * il.Quantity) AS total_sales\nFROM InvoiceLine il\nJOIN Track t\n  ON il.TrackId = t.TrackId\nJOIN Genre g\n  ON t.GenreId = g.GenreId\nGROUP BY g.GenreId, g.Name\nORDER BY total_sales DESC\nLIMIT 5;",
     "rows": [
       {
-        "Genre": "Rock",
-        "TotalSales": 826.65
+        "genre": "Rock",
+        "total_sales": 826.65
       },
       {
-        "Genre": "Latin",
-        "TotalSales": 382.14
+        "genre": "Latin",
+        "total_sales": 382.14
       },
       {
-        "Genre": "Metal",
-        "TotalSales": 261.36
+        "genre": "Metal",
+        "total_sales": 261.36
       },
       {
-        "Genre": "Alternative & Punk",
-        "TotalSales": 241.56
+        "genre": "Alternative & Punk",
+        "total_sales": 241.56
       },
       {
-        "Genre": "TV Shows",
-        "TotalSales": 93.53
+        "genre": "TV Shows",
+        "total_sales": 93.53
       }
     ],
     "sql_attempts": 1,
-    "latency_s": 2.2326604170375504,
+    "latency_s": 2.3521474579465576,
     "cost_usd": 0.0013075
   },
   "q_002_0": {
@@ -33,7 +33,7 @@
     "sql": "SELECT *\nFROM albums\nWHERE artist = 'AC/DC';",
     "rows": null,
     "sql_attempts": 1,
-    "latency_s": 1.0490665420074947,
+    "latency_s": 1.14668674999848,
     "cost_usd": 0.00034
   },
   "q_003_0": {
@@ -41,12 +41,12 @@
     "sql": "SELECT name, email\nFROM customers\nWHERE country = 'Brazil';",
     "rows": null,
     "sql_attempts": 1,
-    "latency_s": 0.9955424169893377,
+    "latency_s": 1.0812408750061877,
     "cost_usd": 0.000375
   },
   "q_004_0": {
-    "text": "```sql\nSELECT\n  mt.Name AS media_type,\n  COUNT(t.TrackId) AS track_count\nFROM Track t\nJOIN MediaType mt\n  ON t.MediaTypeId = mt.MediaTypeId\nGROUP BY mt.MediaTypeId, mt.Name\nORDER BY track_count DESC\nLIMIT 1;\n```",
-    "sql": "SELECT\n  mt.Name AS media_type,\n  COUNT(t.TrackId) AS track_count\nFROM Track t\nJOIN MediaType mt\n  ON t.MediaTypeId = mt.MediaTypeId\nGROUP BY mt.MediaTypeId, mt.Name\nORDER BY track_count DESC\nLIMIT 1;",
+    "text": "```sql\nSELECT\n  mt.Name AS media_type,\n  COUNT(t.TrackId) AS track_count\nFROM MediaType mt\nJOIN Track t\n  ON t.MediaTypeId = mt.MediaTypeId\nGROUP BY mt.MediaTypeId, mt.Name\nORDER BY track_count DESC\nLIMIT 1;\n```",
+    "sql": "SELECT\n  mt.Name AS media_type,\n  COUNT(t.TrackId) AS track_count\nFROM MediaType mt\nJOIN Track t\n  ON t.MediaTypeId = mt.MediaTypeId\nGROUP BY mt.MediaTypeId, mt.Name\nORDER BY track_count DESC\nLIMIT 1;",
     "rows": [
       {
         "media_type": "MPEG audio file",
@@ -54,7 +54,7 @@
       }
     ],
     "sql_attempts": 1,
-    "latency_s": 0.9839695410337299,
+    "latency_s": 1.4105782080441713,
     "cost_usd": 0.0010675
   },
   "q_005_0": {
@@ -62,97 +62,115 @@
     "sql": "SELECT e.employee_id,\n       e.first_name,\n       e.last_name,\n       COUNT(c.customer_id) AS customer_count\nFROM employees e\nJOIN customers c\n  ON c.support_rep_id = e.employee_id\nGROUP BY e.employee_id, e.first_name, e.last_name\nORDER BY customer_count DESC\nLIMIT 1;",
     "rows": null,
     "sql_attempts": 1,
-    "latency_s": 1.5085491250501946,
+    "latency_s": 1.048969750001561,
     "cost_usd": 0.00118
   },
   "q_006_0": {
-    "text": "```sql\nSELECT\n  p.Name AS playlist_name,\n  COUNT(pt.TrackId) AS track_count\nFROM Playlist AS p\nLEFT JOIN PlaylistTrack AS pt\n  ON p.PlaylistId = pt.PlaylistId\nGROUP BY\n  p.PlaylistId,\n  p.Name\nORDER BY\n  p.Name;\n```",
-    "sql": "SELECT\n  p.Name AS playlist_name,\n  COUNT(pt.TrackId) AS track_count\nFROM Playlist AS p\nLEFT JOIN PlaylistTrack AS pt\n  ON p.PlaylistId = pt.PlaylistId\nGROUP BY\n  p.PlaylistId,\n  p.Name\nORDER BY\n  p.Name;",
+    "text": "```sql\nSELECT\n  p.PlaylistId,\n  p.Name AS PlaylistName,\n  COUNT(pt.TrackId) AS TrackCount\nFROM Playlist AS p\nLEFT JOIN PlaylistTrack AS pt\n  ON p.PlaylistId = pt.PlaylistId\nGROUP BY\n  p.PlaylistId,\n  p.Name;\n```",
+    "sql": "SELECT\n  p.PlaylistId,\n  p.Name AS PlaylistName,\n  COUNT(pt.TrackId) AS TrackCount\nFROM Playlist AS p\nLEFT JOIN PlaylistTrack AS pt\n  ON p.PlaylistId = pt.PlaylistId\nGROUP BY\n  p.PlaylistId,\n  p.Name;",
     "rows": [
       {
-        "playlist_name": "90\u2019s Music",
-        "track_count": 1477
+        "PlaylistId": 1,
+        "PlaylistName": "Music",
+        "TrackCount": 3290
       },
       {
-        "playlist_name": "Audiobooks",
-        "track_count": 0
+        "PlaylistId": 2,
+        "PlaylistName": "Movies",
+        "TrackCount": 0
       },
       {
-        "playlist_name": "Audiobooks",
-        "track_count": 0
+        "PlaylistId": 3,
+        "PlaylistName": "TV Shows",
+        "TrackCount": 213
       },
       {
-        "playlist_name": "Brazilian Music",
-        "track_count": 39
+        "PlaylistId": 4,
+        "PlaylistName": "Audiobooks",
+        "TrackCount": 0
       },
       {
-        "playlist_name": "Classical",
-        "track_count": 75
+        "PlaylistId": 5,
+        "PlaylistName": "90\u2019s Music",
+        "TrackCount": 1477
       },
       {
-        "playlist_name": "Classical 101 - Deep Cuts",
-        "track_count": 25
+        "PlaylistId": 6,
+        "PlaylistName": "Audiobooks",
+        "TrackCount": 0
       },
       {
-        "playlist_name": "Classical 101 - Next Steps",
-        "track_count": 25
+        "PlaylistId": 7,
+        "PlaylistName": "Movies",
+        "TrackCount": 0
       },
       {
-        "playlist_name": "Classical 101 - The Basics",
-        "track_count": 25
+        "PlaylistId": 8,
+        "PlaylistName": "Music",
+        "TrackCount": 3290
       },
       {
-        "playlist_name": "Grunge",
-        "track_count": 15
+        "PlaylistId": 9,
+        "PlaylistName": "Music Videos",
+        "TrackCount": 1
       },
       {
-        "playlist_name": "Heavy Metal Classic",
-        "track_count": 26
+        "PlaylistId": 10,
+        "PlaylistName": "TV Shows",
+        "TrackCount": 213
       },
       {
-        "playlist_name": "Movies",
-        "track_count": 0
+        "PlaylistId": 11,
+        "PlaylistName": "Brazilian Music",
+        "TrackCount": 39
       },
       {
-        "playlist_name": "Movies",
-        "track_count": 0
+        "PlaylistId": 12,
+        "PlaylistName": "Classical",
+        "TrackCount": 75
       },
       {
-        "playlist_name": "Music",
-        "track_count": 3290
+        "PlaylistId": 13,
+        "PlaylistName": "Classical 101 - Deep Cuts",
+        "TrackCount": 25
       },
       {
-        "playlist_name": "Music",
-        "track_count": 3290
+        "PlaylistId": 14,
+        "PlaylistName": "Classical 101 - Next Steps",
+        "TrackCount": 25
       },
       {
-        "playlist_name": "Music Videos",
-        "track_count": 1
+        "PlaylistId": 15,
+        "PlaylistName": "Classical 101 - The Basics",
+        "TrackCount": 25
       },
       {
-        "playlist_name": "On-The-Go 1",
-        "track_count": 1
+        "PlaylistId": 16,
+        "PlaylistName": "Grunge",
+        "TrackCount": 15
       },
       {
-        "playlist_name": "TV Shows",
-        "track_count": 213
+        "PlaylistId": 17,
+        "PlaylistName": "Heavy Metal Classic",
+        "TrackCount": 26
       },
       {
-        "playlist_name": "TV Shows",
-        "track_count": 213
+        "PlaylistId": 18,
+        "PlaylistName": "On-The-Go 1",
+        "TrackCount": 1
       }
     ],
     "sql_attempts": 1,
-    "latency_s": 1.3246349170221947,
-    "cost_usd": 0.0011025
+    "latency_s": 1.1385454999981448,
+    "cost_usd": 0.0010875
   },
   "q_007_0": {
-    "text": "```sql\nSELECT SUM(revenue) AS total_revenue\nFROM your_table_name\nWHERE EXTRACT(YEAR FROM date_column) = 2021;\n```",
-    "sql": "SELECT SUM(revenue) AS total_revenue\nFROM your_table_name\nWHERE EXTRACT(YEAR FROM date_column) = 2021;",
+    "text": "```sql\nSELECT SUM(revenue) AS total_revenue\nFROM your_table_name\nWHERE EXTRACT(YEAR FROM revenue_date) = 2021;\n```\n\nIf your table has a date column with a different name, replace `revenue_date` accordingly.",
+    "sql": "SELECT SUM(revenue) AS total_revenue\nFROM your_table_name\nWHERE EXTRACT(YEAR FROM revenue_date) = 2021;",
     "rows": null,
     "sql_attempts": 1,
-    "latency_s": 1.5717802090221085,
-    "cost_usd": 0.0006025
+    "latency_s": 1.2187122499453835,
+    "cost_usd": 0.0009175
   },
   "q_008_0": {
     "text": "```sql\nSELECT\n  BillingCountry,\n  AVG(Total) AS AverageInvoiceTotal\nFROM Invoice\nGROUP BY BillingCountry\nORDER BY AverageInvoiceTotal DESC;\n```",
@@ -256,16 +274,16 @@
       }
     ],
     "sql_attempts": 1,
-    "latency_s": 1.1731652920134366,
+    "latency_s": 0.6718686670064926,
     "cost_usd": 0.0006425
   },
   "q_009_0": {
-    "text": "```sql\nSELECT\n    customer_id,\n    SUM(amount) AS total_spending,\n    RANK() OVER (ORDER BY SUM(amount) DESC) AS spending_rank\nFROM orders\nGROUP BY customer_id\nORDER BY total_spending DESC\nLIMIT 5;\n```\n\nIf your spending column or table name is different, replace:\n\n- `orders` with your table name\n- `amount` with the purchase/spending column",
-    "sql": "SELECT\n    customer_id,\n    SUM(amount) AS total_spending,\n    RANK() OVER (ORDER BY SUM(amount) DESC) AS spending_rank\nFROM orders\nGROUP BY customer_id\nORDER BY total_spending DESC\nLIMIT 5;",
+    "text": "```sql\nSELECT\n  customer_id,\n  total_spending,\n  RANK() OVER (ORDER BY total_spending DESC) AS spending_rank\nFROM (\n  SELECT\n    customer_id,\n    SUM(amount) AS total_spending\n  FROM orders\n  GROUP BY customer_id\n) t\nORDER BY total_spending DESC\nLIMIT 5;\n```",
+    "sql": "SELECT\n  customer_id,\n  total_spending,\n  RANK() OVER (ORDER BY total_spending DESC) AS spending_rank\nFROM (\n  SELECT\n    customer_id,\n    SUM(amount) AS total_spending\n  FROM orders\n  GROUP BY customer_id\n) t\nORDER BY total_spending DESC\nLIMIT 5;",
     "rows": null,
     "sql_attempts": 1,
-    "latency_s": 1.3390420830110088,
-    "cost_usd": 0.00145
+    "latency_s": 1.2582288749981672,
+    "cost_usd": 0.001255
   },
   "q_010_0": {
     "text": "```sql\nSELECT\n    ar.Name AS artist_name,\n    COUNT(DISTINCT g.GenreId) AS distinct_genre_count\nFROM Artist ar\nJOIN Album al\n    ON ar.ArtistId = al.ArtistId\nJOIN Track t\n    ON al.AlbumId = t.AlbumId\nJOIN Genre g\n    ON t.GenreId = g.GenreId\nGROUP BY ar.ArtistId, ar.Name\nHAVING COUNT(DISTINCT g.GenreId) > 3;\n```",
@@ -277,7 +295,7 @@
       }
     ],
     "sql_attempts": 1,
-    "latency_s": 1.7395472089992836,
+    "latency_s": 1.5525459590135142,
     "cost_usd": 0.0017225
   },
   "q_001_1": {
@@ -306,28 +324,28 @@
       }
     ],
     "sql_attempts": 1,
-    "latency_s": 1.6085044579813257,
+    "latency_s": 1.2470550839789212,
     "cost_usd": 0.0013075
   },
   "q_002_1": {
-    "text": "```sql\nSELECT *\nFROM albums\nWHERE ArtistId = (\n  SELECT ArtistId\n  FROM artists\n  WHERE Name = 'AC/DC'\n);\n```",
-    "sql": "SELECT *\nFROM albums\nWHERE ArtistId = (\n  SELECT ArtistId\n  FROM artists\n  WHERE Name = 'AC/DC'\n);",
+    "text": "```sql\nSELECT a.title\nFROM albums AS a\nJOIN artists AS ar ON a.artist_id = ar.artist_id\nWHERE ar.name = 'AC/DC';\n```",
+    "sql": "SELECT a.title\nFROM albums AS a\nJOIN artists AS ar ON a.artist_id = ar.artist_id\nWHERE ar.name = 'AC/DC';",
     "rows": null,
     "sql_attempts": 1,
-    "latency_s": 0.9317959169857204,
-    "cost_usd": 0.00058
+    "latency_s": 0.9919696249999106,
+    "cost_usd": 0.00061
   },
   "q_003_1": {
-    "text": "```sql\nSELECT name, email\nFROM customers\nWHERE country = 'Brazil';\n```",
-    "sql": "SELECT name, email\nFROM customers\nWHERE country = 'Brazil';",
+    "text": "```sql\nSELECT Name, Email\nFROM Customers\nWHERE Country = 'Brazil';\n```",
+    "sql": "SELECT Name, Email\nFROM Customers\nWHERE Country = 'Brazil';",
     "rows": null,
     "sql_attempts": 1,
-    "latency_s": 0.9492257499950938,
+    "latency_s": 0.8164322919910774,
     "cost_usd": 0.000375
   },
   "q_004_1": {
-    "text": "```sql\nSELECT\n  mt.Name AS media_type,\n  COUNT(t.TrackId) AS track_count\nFROM Track t\nJOIN MediaType mt\n  ON t.MediaTypeId = mt.MediaTypeId\nGROUP BY mt.MediaTypeId, mt.Name\nORDER BY track_count DESC\nLIMIT 1;\n```",
-    "sql": "SELECT\n  mt.Name AS media_type,\n  COUNT(t.TrackId) AS track_count\nFROM Track t\nJOIN MediaType mt\n  ON t.MediaTypeId = mt.MediaTypeId\nGROUP BY mt.MediaTypeId, mt.Name\nORDER BY track_count DESC\nLIMIT 1;",
+    "text": "```sql\nSELECT\n  mt.Name AS media_type,\n  COUNT(t.TrackId) AS track_count\nFROM MediaType mt\nJOIN Track t\n  ON t.MediaTypeId = mt.MediaTypeId\nGROUP BY mt.MediaTypeId, mt.Name\nORDER BY track_count DESC\nLIMIT 1;\n```",
+    "sql": "SELECT\n  mt.Name AS media_type,\n  COUNT(t.TrackId) AS track_count\nFROM MediaType mt\nJOIN Track t\n  ON t.MediaTypeId = mt.MediaTypeId\nGROUP BY mt.MediaTypeId, mt.Name\nORDER BY track_count DESC\nLIMIT 1;",
     "rows": [
       {
         "media_type": "MPEG audio file",
@@ -335,7 +353,7 @@
       }
     ],
     "sql_attempts": 1,
-    "latency_s": 1.024258290999569,
+    "latency_s": 2.869733375031501,
     "cost_usd": 0.0010675
   },
   "q_005_1": {
@@ -343,7 +361,7 @@
     "sql": "SELECT e.employee_id,\n       e.first_name,\n       e.last_name,\n       COUNT(c.customer_id) AS customer_count\nFROM employees e\nJOIN customers c\n  ON c.support_rep_id = e.employee_id\nGROUP BY e.employee_id, e.first_name, e.last_name\nORDER BY customer_count DESC\nLIMIT 1;",
     "rows": null,
     "sql_attempts": 1,
-    "latency_s": 1.2424750829814002,
+    "latency_s": 0.9181514579686336,
     "cost_usd": 0.00118
   },
   "q_006_1": {
@@ -442,16 +460,16 @@
       }
     ],
     "sql_attempts": 1,
-    "latency_s": 1.4724352919729427,
+    "latency_s": 1.1246213329723105,
     "cost_usd": 0.0010875
   },
   "q_007_1": {
-    "text": "```sql\nSELECT SUM(revenue) AS total_revenue\nFROM your_table_name\nWHERE YEAR(date_column) = 2021;\n```",
-    "sql": "SELECT SUM(revenue) AS total_revenue\nFROM your_table_name\nWHERE YEAR(date_column) = 2021;",
+    "text": "```sql\nSELECT SUM(revenue) AS total_revenue\nFROM your_table_name\nWHERE EXTRACT(YEAR FROM date_column) = 2021;\n```",
+    "sql": "SELECT SUM(revenue) AS total_revenue\nFROM your_table_name\nWHERE EXTRACT(YEAR FROM date_column) = 2021;",
     "rows": null,
     "sql_attempts": 1,
-    "latency_s": 1.1023029999923892,
-    "cost_usd": 0.0005425
+    "latency_s": 0.7164821249898523,
+    "cost_usd": 0.0006025
   },
   "q_008_1": {
     "text": "```sql\nSELECT\n  BillingCountry,\n  AVG(Total) AS AverageInvoiceTotal\nFROM Invoice\nGROUP BY BillingCountry\nORDER BY AverageInvoiceTotal DESC;\n```",
@@ -555,20 +573,20 @@
       }
     ],
     "sql_attempts": 1,
-    "latency_s": 1.0957789579988457,
+    "latency_s": 0.7135612089768983,
     "cost_usd": 0.0006425
   },
   "q_009_1": {
-    "text": "```sql\nWITH customer_spending AS (\n    SELECT\n        customer_id,\n        SUM(amount) AS total_spending\n    FROM orders\n    GROUP BY customer_id\n),\nranked_customers AS (\n    SELECT\n        customer_id,\n        total_spending,\n        RANK() OVER (ORDER BY total_spending DESC) AS spending_rank\n    FROM customer_spending\n)\nSELECT\n    customer_id,\n    total_spending,\n    spending_rank\nFROM ranked_customers\nWHERE spending_rank <= 5\nORDER BY spending_rank, customer_id;\n```\n\nIf your spending column or table names differ, replace:\n- `orders` with your table name\n- `amount` with the purchase/spending column name",
-    "sql": "WITH customer_spending AS (\n    SELECT\n        customer_id,\n        SUM(amount) AS total_spending\n    FROM orders\n    GROUP BY customer_id\n),\nranked_customers AS (\n    SELECT\n        customer_id,\n        total_spending,\n        RANK() OVER (ORDER BY total_spending DESC) AS spending_rank\n    FROM customer_spending\n)\nSELECT\n    customer_id,\n    total_spending,\n    spending_rank\nFROM ranked_customers\nWHERE spending_rank <= 5\nORDER BY spending_rank, customer_id;",
+    "text": "```sql\nSELECT\n    customer_id,\n    SUM(amount) AS total_spending,\n    RANK() OVER (ORDER BY SUM(amount) DESC) AS spending_rank\nFROM orders\nGROUP BY customer_id\nORDER BY total_spending DESC\nLIMIT 5;\n```\n\nIf your table or column names differ, replace:\n- `orders` with your sales/orders table\n- `customer_id` with the customer identifier\n- `amount` with the purchase/spending value",
+    "sql": "SELECT\n    customer_id,\n    SUM(amount) AS total_spending,\n    RANK() OVER (ORDER BY SUM(amount) DESC) AS spending_rank\nFROM orders\nGROUP BY customer_id\nORDER BY total_spending DESC\nLIMIT 5;",
     "rows": null,
     "sql_attempts": 1,
-    "latency_s": 1.700861791963689,
-    "cost_usd": 0.002335
+    "latency_s": 2.026760959008243,
+    "cost_usd": 0.001585
   },
   "q_010_1": {
-    "text": "```sql\nSELECT\n  ar.Name AS artist_name,\n  COUNT(DISTINCT g.GenreId) AS distinct_genre_count\nFROM Artist ar\nJOIN Album al\n  ON ar.ArtistId = al.ArtistId\nJOIN Track t\n  ON al.AlbumId = t.AlbumId\nJOIN Genre g\n  ON t.GenreId = g.GenreId\nGROUP BY ar.ArtistId, ar.Name\nHAVING COUNT(DISTINCT g.GenreId) > 3;\n```",
-    "sql": "SELECT\n  ar.Name AS artist_name,\n  COUNT(DISTINCT g.GenreId) AS distinct_genre_count\nFROM Artist ar\nJOIN Album al\n  ON ar.ArtistId = al.ArtistId\nJOIN Track t\n  ON al.AlbumId = t.AlbumId\nJOIN Genre g\n  ON t.GenreId = g.GenreId\nGROUP BY ar.ArtistId, ar.Name\nHAVING COUNT(DISTINCT g.GenreId) > 3;",
+    "text": "```sql\nSELECT\n    ar.Name AS artist_name,\n    COUNT(DISTINCT g.GenreId) AS distinct_genre_count\nFROM Artist ar\nJOIN Album al\n    ON al.ArtistId = ar.ArtistId\nJOIN Track t\n    ON t.AlbumId = al.AlbumId\nJOIN Genre g\n    ON g.GenreId = t.GenreId\nGROUP BY ar.ArtistId, ar.Name\nHAVING COUNT(DISTINCT g.GenreId) > 3;\n```",
+    "sql": "SELECT\n    ar.Name AS artist_name,\n    COUNT(DISTINCT g.GenreId) AS distinct_genre_count\nFROM Artist ar\nJOIN Album al\n    ON al.ArtistId = ar.ArtistId\nJOIN Track t\n    ON t.AlbumId = al.AlbumId\nJOIN Genre g\n    ON g.GenreId = t.GenreId\nGROUP BY ar.ArtistId, ar.Name\nHAVING COUNT(DISTINCT g.GenreId) > 3;",
     "rows": [
       {
         "artist_name": "Iron Maiden",
@@ -576,7 +594,7 @@
       }
     ],
     "sql_attempts": 1,
-    "latency_s": 1.679986875038594,
+    "latency_s": 1.6589537499821745,
     "cost_usd": 0.0017225
   },
   "q_001_2": {
@@ -605,28 +623,28 @@
       }
     ],
     "sql_attempts": 1,
-    "latency_s": 1.8127294160076417,
+    "latency_s": 1.2841342500178143,
     "cost_usd": 0.0013075
   },
   "q_002_2": {
-    "text": "```sql\nSELECT title\nFROM albums\nWHERE artist = 'AC/DC';\n```",
-    "sql": "SELECT title\nFROM albums\nWHERE artist = 'AC/DC';",
+    "text": "```sql\nSELECT a.*\nFROM albums AS a\nJOIN artists AS ar\n  ON a.artist_id = ar.artist_id\nWHERE ar.name = 'AC/DC';\n```",
+    "sql": "SELECT a.*\nFROM albums AS a\nJOIN artists AS ar\n  ON a.artist_id = ar.artist_id\nWHERE ar.name = 'AC/DC';",
     "rows": null,
     "sql_attempts": 1,
-    "latency_s": 0.8914962909766473,
-    "cost_usd": 0.000355
+    "latency_s": 1.0326643750304356,
+    "cost_usd": 0.000625
   },
   "q_003_2": {
     "text": "```sql\nSELECT name, email\nFROM customers\nWHERE country = 'Brazil';\n```",
     "sql": "SELECT name, email\nFROM customers\nWHERE country = 'Brazil';",
     "rows": null,
     "sql_attempts": 1,
-    "latency_s": 0.7075822079787031,
+    "latency_s": 0.6362096250522882,
     "cost_usd": 0.000375
   },
   "q_004_2": {
-    "text": "```sql\nSELECT\n  mt.Name AS media_type,\n  COUNT(t.TrackId) AS track_count\nFROM MediaType mt\nJOIN Track t\n  ON t.MediaTypeId = mt.MediaTypeId\nGROUP BY mt.MediaTypeId, mt.Name\nORDER BY track_count DESC\nLIMIT 1;\n```",
-    "sql": "SELECT\n  mt.Name AS media_type,\n  COUNT(t.TrackId) AS track_count\nFROM MediaType mt\nJOIN Track t\n  ON t.MediaTypeId = mt.MediaTypeId\nGROUP BY mt.MediaTypeId, mt.Name\nORDER BY track_count DESC\nLIMIT 1;",
+    "text": "```sql\nSELECT\n  mt.Name AS media_type,\n  COUNT(t.TrackId) AS track_count\nFROM Track t\nJOIN MediaType mt\n  ON t.MediaTypeId = mt.MediaTypeId\nGROUP BY mt.MediaTypeId, mt.Name\nORDER BY track_count DESC\nLIMIT 1;\n```",
+    "sql": "SELECT\n  mt.Name AS media_type,\n  COUNT(t.TrackId) AS track_count\nFROM Track t\nJOIN MediaType mt\n  ON t.MediaTypeId = mt.MediaTypeId\nGROUP BY mt.MediaTypeId, mt.Name\nORDER BY track_count DESC\nLIMIT 1;",
     "rows": [
       {
         "media_type": "MPEG audio file",
@@ -634,104 +652,122 @@
       }
     ],
     "sql_attempts": 1,
-    "latency_s": 1.2529003330273554,
+    "latency_s": 1.1513369999593124,
     "cost_usd": 0.0010675
   },
   "q_005_2": {
-    "text": "```sql\nSELECT e.employee_id,\n       e.first_name,\n       e.last_name,\n       COUNT(c.customer_id) AS customer_count\nFROM employees e\nJOIN customers c\n  ON c.support_rep_id = e.employee_id\nGROUP BY e.employee_id, e.first_name, e.last_name\nORDER BY customer_count DESC\nLIMIT 1;\n```",
-    "sql": "SELECT e.employee_id,\n       e.first_name,\n       e.last_name,\n       COUNT(c.customer_id) AS customer_count\nFROM employees e\nJOIN customers c\n  ON c.support_rep_id = e.employee_id\nGROUP BY e.employee_id, e.first_name, e.last_name\nORDER BY customer_count DESC\nLIMIT 1;",
+    "text": "```sql\nSELECT e.employeeNumber,\n       e.firstName,\n       e.lastName,\n       COUNT(c.customerNumber) AS customer_count\nFROM employees e\nJOIN customers c\n  ON e.employeeNumber = c.salesRepEmployeeNumber\nGROUP BY e.employeeNumber, e.firstName, e.lastName\nORDER BY customer_count DESC\nLIMIT 1;\n```",
+    "sql": "SELECT e.employeeNumber,\n       e.firstName,\n       e.lastName,\n       COUNT(c.customerNumber) AS customer_count\nFROM employees e\nJOIN customers c\n  ON e.employeeNumber = c.salesRepEmployeeNumber\nGROUP BY e.employeeNumber, e.firstName, e.lastName\nORDER BY customer_count DESC\nLIMIT 1;",
     "rows": null,
     "sql_attempts": 1,
-    "latency_s": 1.5000386249739677,
-    "cost_usd": 0.00118
+    "latency_s": 1.169569291989319,
+    "cost_usd": 0.001195
   },
   "q_006_2": {
-    "text": "```sql\nSELECT\n  p.Name AS PlaylistName,\n  COUNT(pt.TrackId) AS TrackCount\nFROM Playlist p\nLEFT JOIN PlaylistTrack pt\n  ON p.PlaylistId = pt.PlaylistId\nGROUP BY\n  p.PlaylistId,\n  p.Name;\n```",
-    "sql": "SELECT\n  p.Name AS PlaylistName,\n  COUNT(pt.TrackId) AS TrackCount\nFROM Playlist p\nLEFT JOIN PlaylistTrack pt\n  ON p.PlaylistId = pt.PlaylistId\nGROUP BY\n  p.PlaylistId,\n  p.Name;",
+    "text": "```sql\nSELECT\n  p.PlaylistId,\n  p.Name AS PlaylistName,\n  COUNT(pt.TrackId) AS TrackCount\nFROM Playlist AS p\nLEFT JOIN PlaylistTrack AS pt\n  ON p.PlaylistId = pt.PlaylistId\nGROUP BY\n  p.PlaylistId,\n  p.Name;\n```",
+    "sql": "SELECT\n  p.PlaylistId,\n  p.Name AS PlaylistName,\n  COUNT(pt.TrackId) AS TrackCount\nFROM Playlist AS p\nLEFT JOIN PlaylistTrack AS pt\n  ON p.PlaylistId = pt.PlaylistId\nGROUP BY\n  p.PlaylistId,\n  p.Name;",
     "rows": [
       {
+        "PlaylistId": 1,
         "PlaylistName": "Music",
         "TrackCount": 3290
       },
       {
+        "PlaylistId": 2,
         "PlaylistName": "Movies",
         "TrackCount": 0
       },
       {
+        "PlaylistId": 3,
         "PlaylistName": "TV Shows",
         "TrackCount": 213
       },
       {
+        "PlaylistId": 4,
         "PlaylistName": "Audiobooks",
         "TrackCount": 0
       },
       {
+        "PlaylistId": 5,
         "PlaylistName": "90\u2019s Music",
         "TrackCount": 1477
       },
       {
+        "PlaylistId": 6,
         "PlaylistName": "Audiobooks",
         "TrackCount": 0
       },
       {
+        "PlaylistId": 7,
         "PlaylistName": "Movies",
         "TrackCount": 0
       },
       {
+        "PlaylistId": 8,
         "PlaylistName": "Music",
         "TrackCount": 3290
       },
       {
+        "PlaylistId": 9,
         "PlaylistName": "Music Videos",
         "TrackCount": 1
       },
       {
+        "PlaylistId": 10,
         "PlaylistName": "TV Shows",
         "TrackCount": 213
       },
       {
+        "PlaylistId": 11,
         "PlaylistName": "Brazilian Music",
         "TrackCount": 39
       },
       {
+        "PlaylistId": 12,
         "PlaylistName": "Classical",
         "TrackCount": 75
       },
       {
+        "PlaylistId": 13,
         "PlaylistName": "Classical 101 - Deep Cuts",
         "TrackCount": 25
       },
       {
+        "PlaylistId": 14,
         "PlaylistName": "Classical 101 - Next Steps",
         "TrackCount": 25
       },
       {
+        "PlaylistId": 15,
         "PlaylistName": "Classical 101 - The Basics",
         "TrackCount": 25
       },
       {
+        "PlaylistId": 16,
         "PlaylistName": "Grunge",
         "TrackCount": 15
       },
       {
+        "PlaylistId": 17,
         "PlaylistName": "Heavy Metal Classic",
         "TrackCount": 26
       },
       {
+        "PlaylistId": 18,
         "PlaylistName": "On-The-Go 1",
         "TrackCount": 1
       }
     ],
     "sql_attempts": 1,
-    "latency_s": 1.1924207920092158,
-    "cost_usd": 0.0009675
+    "latency_s": 1.0584295830340125,
+    "cost_usd": 0.0010875
   },
   "q_007_2": {
     "text": "```sql\nSELECT SUM(revenue) AS total_revenue\nFROM your_table_name\nWHERE EXTRACT(YEAR FROM date_column) = 2021;\n```",
     "sql": "SELECT SUM(revenue) AS total_revenue\nFROM your_table_name\nWHERE EXTRACT(YEAR FROM date_column) = 2021;",
     "rows": null,
     "sql_attempts": 1,
-    "latency_s": 1.5327844580169767,
+    "latency_s": 1.017537750012707,
     "cost_usd": 0.0006025
   },
   "q_008_2": {
@@ -836,23 +872,23 @@
       }
     ],
     "sql_attempts": 1,
-    "latency_s": 0.854340541001875,
+    "latency_s": 1.1255898329545744,
     "cost_usd": 0.0006425
   },
   "q_009_2": {
-    "text": "```sql\nWITH customer_spending AS (\n    SELECT\n        customer_id,\n        SUM(amount) AS total_spending\n    FROM orders\n    GROUP BY customer_id\n),\nranked_customers AS (\n    SELECT\n        customer_id,\n        total_spending,\n        RANK() OVER (ORDER BY total_spending DESC) AS spending_rank\n    FROM customer_spending\n)\nSELECT\n    customer_id,\n    total_spending,\n    spending_rank\nFROM ranked_customers\nWHERE spending_rank <= 5\nORDER BY spending_rank, customer_id;\n```\n\nIf your spending column or table names differ, replace:\n- `orders` with your table name\n- `amount` with the purchase/spending column",
+    "text": "```sql\nWITH customer_spending AS (\n    SELECT\n        customer_id,\n        SUM(amount) AS total_spending\n    FROM orders\n    GROUP BY customer_id\n),\nranked_customers AS (\n    SELECT\n        customer_id,\n        total_spending,\n        RANK() OVER (ORDER BY total_spending DESC) AS spending_rank\n    FROM customer_spending\n)\nSELECT\n    customer_id,\n    total_spending,\n    spending_rank\nFROM ranked_customers\nWHERE spending_rank <= 5\nORDER BY spending_rank, customer_id;\n```\n\nIf your spending column or table names differ, replace:\n- `orders` with your table name\n- `amount` with the spending/purchase column name",
     "sql": "WITH customer_spending AS (\n    SELECT\n        customer_id,\n        SUM(amount) AS total_spending\n    FROM orders\n    GROUP BY customer_id\n),\nranked_customers AS (\n    SELECT\n        customer_id,\n        total_spending,\n        RANK() OVER (ORDER BY total_spending DESC) AS spending_rank\n    FROM customer_spending\n)\nSELECT\n    customer_id,\n    total_spending,\n    spending_rank\nFROM ranked_customers\nWHERE spending_rank <= 5\nORDER BY spending_rank, customer_id;",
     "rows": null,
     "sql_attempts": 1,
-    "latency_s": 1.863856374984607,
-    "cost_usd": 0.00232
+    "latency_s": 1.9412160420324653,
+    "cost_usd": 0.002335
   },
   "q_010_2": {
-    "text": "```sql\nSELECT\n  ar.name AS artist_name,\n  COUNT(DISTINCT g.genre_id) AS distinct_genre_count\nFROM artists ar\nJOIN albums al\n  ON al.artist_id = ar.artist_id\nJOIN tracks t\n  ON t.album_id = al.album_id\nJOIN genres g\n  ON g.genre_id = t.genre_id\nGROUP BY ar.artist_id, ar.name\nHAVING COUNT(DISTINCT g.genre_id) > 3;\n```",
-    "sql": "SELECT\n  ar.name AS artist_name,\n  COUNT(DISTINCT g.genre_id) AS distinct_genre_count\nFROM artists ar\nJOIN albums al\n  ON al.artist_id = ar.artist_id\nJOIN tracks t\n  ON t.album_id = al.album_id\nJOIN genres g\n  ON g.genre_id = t.genre_id\nGROUP BY ar.artist_id, ar.name\nHAVING COUNT(DISTINCT g.genre_id) > 3;",
+    "text": "```sql\nSELECT\n    ar.name AS artist_name,\n    COUNT(DISTINCT g.genre_id) AS distinct_genre_count\nFROM artist ar\nJOIN album al\n    ON ar.artist_id = al.artist_id\nJOIN track t\n    ON al.album_id = t.album_id\nJOIN genre g\n    ON t.genre_id = g.genre_id\nGROUP BY ar.artist_id, ar.name\nHAVING COUNT(DISTINCT g.genre_id) > 3;\n```",
+    "sql": "SELECT\n    ar.name AS artist_name,\n    COUNT(DISTINCT g.genre_id) AS distinct_genre_count\nFROM artist ar\nJOIN album al\n    ON ar.artist_id = al.artist_id\nJOIN track t\n    ON al.album_id = t.album_id\nJOIN genre g\n    ON t.genre_id = g.genre_id\nGROUP BY ar.artist_id, ar.name\nHAVING COUNT(DISTINCT g.genre_id) > 3;",
     "rows": null,
     "sql_attempts": 1,
-    "latency_s": 1.7250500420341268,
+    "latency_s": 3.7648019589832984,
     "cost_usd": 0.0015875
   }
 }

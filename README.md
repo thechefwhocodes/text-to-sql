@@ -1,139 +1,39 @@
 # Text-to-SQL Agent
 
-An interactive CLI that turns plain-English questions into SQL, runs them against a database, and explains the results back to you.
+Interactive CLI that turns plain-English questions into SQL, runs them against a database, and explains the results back to you. See [NOTES.md](NOTES.md) for what was built, how it was validated, and known gaps.
 
-## Context
-
-GitLab wants an agentic BI CLI: point it at a database, ask questions in plain English, get SQL + results back — including follow-ups. Their prototype (one bare prompt, GPT-5.4) had three problems: **wrong SQL** (hallucinated columns/tables), **too slow** (~7s, need <3s P50), and **too expensive** at their projected scale (~30,000 queries/day). This repo is the proof-of-concept addressing all three, plus the evidence that it actually works.
-
-## Quick Start
+## Setup
 
 ```bash
-./setup.sh                          # downloads the sample database
-uv sync                             # installs dependencies
+./setup.sh   # downloads the sample database
+uv sync      # installs dependencies
+```
+
+## Environment Variables
+
+| Variable | Required for |
+|---|---|
+| `FIREWORKS_API_KEY` | The CLI, and the agent half of `python -m src.eval` |
+| `OPENAI_API_KEY` | Only the baseline half of `python -m src.eval` — skipped if unset |
+
+## Run
+
+```bash
 export FIREWORKS_API_KEY=<your-key>
 uv run cli
 ```
 
-Then just type a question:
+Type a question, see the SQL and results, get a plain-English answer. Ask a follow-up and it remembers the conversation. Type `exit` or `quit` to leave.
 
-```
-> What are the top 5 best-selling genres by total sales?
-```
-
-You'll see the SQL it ran, the raw rows, and a plain-English summary. Ask a follow-up ("now just show me the top 1") and it remembers the conversation. Type `exit` or `quit` to leave.
-
-## Environment Variables
-
-| Variable | Required for | Why |
-|---|---|---|
-| `FIREWORKS_API_KEY` | The CLI, and the "our agent" half of `python -m src.eval` | Our agent runs on `gpt-oss-120b`, an open-source model hosted on Fireworks. |
-| `OPENAI_API_KEY` | Only the baseline half of `python -m src.eval` | The baseline is the customer's original prompt run on `gpt-5.4`, so we have something to compare against. If this isn't set, `eval.py` just skips that comparison and still reports our agent's results. |
-
-## What I Built
-
-Two things live side by side so we can compare them:
-
-- **[`src/baseline.py`](src/baseline.py)** — the customer's original prototype: one prompt, no schema, no retries — `Convert this question to SQL: {question}` — then run whatever SQL comes back.
-- **[`src/agent.py`](src/agent.py)** — our agent. Three changes from the baseline:
-  1. **It sees the database schema.** The full `CREATE TABLE` statements go into the system prompt, so it isn't guessing column names.
-  2. **It calls SQL as a tool, not free text.** Instead of pasting SQL into its reply, the model calls a `run_sql` tool ([`src/tools.py`](src/tools.py)). If the query fails (bad table name, syntax error, etc.) or the tool call's JSON arguments come back slightly malformed, the error is handed back to the model as a message, and it gets more tries to fix it (4 steps total) — instead of crashing or returning garbage.
-  3. **It remembers the conversation.** Follow-up questions reuse the same message history, so "now just show me the top 1" knows what "the top 1" refers to.
-
-The system prompt also tells the model to only select the columns it actually needs, instead of defaulting to `SELECT *`.
-
-## Database
-
-The sample database is Chinook — a SQLite database modeling a digital music store, with tables like `Artist`, `Album`, `Track`, `Customer`, `Invoice`, and `Playlist`. Explore it yourself:
-
-```python
-from src.utils import load_db, query_db, print_table_schema
-
-conn = load_db()
-print_table_schema(conn)
-results = query_db(conn, "SELECT * FROM Artist LIMIT 5")
-```
-
-## How I Validated It
+## Evaluate
 
 ```bash
 uv run python -m src.eval
 ```
 
-This runs both the agent and the baseline over all 10 questions in `data/dev_questions_with_answers.json`, **3 times each** — a single run is noisy, since a model can get the exact same question right once and wrong the next time. It checks each answer's result rows against the gold answer, ignoring things that don't actually matter: row order, column names, and minor float rounding.
+Scores our agent against the customer's baseline on the 10 dev questions and writes `data/dev_answers.json`.
 
-It also tolerates a query shaping its result differently than gold, as long as the same information is in there. For example — this was a real bug I caught and fixed while building this — a query returning `FirstName` + `LastName` in two separate columns still counts as correct against a gold answer that has one combined `CustomerName` column, as long as the underlying names match. Without that, a correct answer could get marked wrong just because it was shaped differently, which would make the self-validation numbers a measure of the grading script, not the agent.
-
-Results below refresh automatically each time you re-run the command above (the baseline's answers are cached in `data/eval_cache.json`, so re-running doesn't re-pay for GPT-5.4 calls). `data/dev_answers.json` — the required deliverable — is also rewritten each run, using the first of the 3 agent runs.
-
-<!-- eval-results:start -->
-## Evaluation Results
-
-_Auto-generated by `python -m src.eval` — do not edit by hand._
-
-3 runs over 10 dev questions.
-
-| Arm | Accuracy | Avg Latency/query | Avg Cost/query | Est. $/day @ 30k queries |
-|---|---|---|---|---|
-| Our agent (gpt-oss-120b) | 100.0% | 1.77s | $0.00063 | $18.93 |
-| Baseline (gpt-5.4) | 46.7% | 1.34s | $0.00103 | $30.90 |
-
-### Missed Questions
-
-**Our agent (gpt-oss-120b)**
-
-_None — every question was answered correctly in every run._
-
-**Baseline (gpt-5.4)**
-
-- `q_002` — wrong 3/3 runs: List all albums by the artist 'AC/DC'.
-- `q_003` — wrong 3/3 runs: What are the names and email addresses of customers from Brazil?
-- `q_005` — wrong 3/3 runs: Which employee has the most customers assigned to them?
-- `q_007` — wrong 3/3 runs: What is the total revenue generated in the year 2021?
-- `q_009` — wrong 3/3 runs: For each customer, what is their total spending and how does it rank compared to other customers? Show the top 5 customers by spending.
-- `q_010` — wrong 1/3 runs: Which artists have tracks in more than 3 different genres? List the artist name and the number of distinct genres.
-
-<!-- eval-results:end -->
-
-## Where It Still Fails
-
-- **Accuracy**: our agent got all 10 dev questions right in this run; the baseline missed 4 of 10 in every run (wrong column/table names it had to guess at) plus one it got right most of the time. That said, 10 questions is a small sample — a wrong guess here or there on a bigger set wouldn't be surprising, so "100%" should be read as "no failures found yet," not "solved."
-- **Latency**: our agent averages under 2s, well below the customer's ~7s baseline and inside the <3s P50 target — but that's an average across easy and hard questions. Whenever the first SQL attempt fails and the retry loop kicks in (up to 4 model calls total), that one question gets noticeably slower, so a harder question set would likely push the P50 closer to the limit.
-- **Scope**: the agent only supports a single read-only `SELECT`/`WITH` statement — no writes, no multiple statements. That's a deliberate safety choice, not a gap, but worth calling out.
-
-## What I'd Tackle Next
-
-- Grow the dev set past 10 questions, including some genuinely ambiguous ones, to get a more reliable accuracy number.
-- Track accuracy by question difficulty instead of one overall pass rate — some questions are inherently harder.
-- Try a couple of other open models on Fireworks to see if there's a better cost/latency/accuracy trade-off than `gpt-oss-120b`.
-- Add basic query safety limits (e.g. a row cap) before this goes anywhere near production traffic.
-
-## Project Structure
-
-```
-.
-├── README.md
-├── setup.sh
-├── pyproject.toml
-├── src/
-│   ├── cli.py          # interactive CLI entry point
-│   ├── agent.py        # our tool-calling text-to-SQL agent
-│   ├── baseline.py     # the customer's original one-shot prompt
-│   ├── tools.py        # the run_sql tool the agent can call
-│   ├── llm.py          # thin wrapper around the OpenAI-compatible chat API
-│   ├── models.py       # model registry (gpt-oss-120b, gpt-5.4) with pricing
-│   ├── turns.py        # conversation turn types
-│   ├── eval.py         # scores agent vs. baseline over the dev questions
-│   └── utils.py        # DB connection + schema helpers
-├── tests/              # unit tests
-└── data/
-    ├── Chinook.db
-    ├── dev_questions_with_answers.json   # dev questions + gold SQL/answers
-    ├── dev_answers.json                  # our agent's answers (deliverable)
-    └── eval_cache.json                   # cached baseline answers
-```
-
-## Running Tests
+## Test
 
 ```bash
 uv run pytest

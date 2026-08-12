@@ -18,7 +18,7 @@ from src.utils import load_db
 QUESTIONS_PATH = Path("data/dev_questions_with_answers.json")
 CACHE_PATH = Path("data/eval_cache.json")
 ANSWERS_PATH = Path("data/dev_answers.json")
-README_PATH = Path("README.md")
+NOTES_PATH = Path("NOTES.md")
 
 RUNS = 3
 QUERIES_PER_DAY = 30_000
@@ -222,10 +222,10 @@ def render_markdown(summaries: list[Summary], questions: list[dict]) -> str:
     return "\n".join(lines)
 
 
-def write_readme_section(markdown: str) -> None:
-    """Replace the eval-results section in README.md (between markers), or
+def write_results_section(markdown: str) -> None:
+    """Replace the eval-results section in NOTES.md (between markers), or
     append it as a new section if this is the first time the eval has run."""
-    text = README_PATH.read_text() if README_PATH.exists() else ""
+    text = NOTES_PATH.read_text() if NOTES_PATH.exists() else ""
 
     if RESULTS_START in text and RESULTS_END in text:
         before = text.split(RESULTS_START)[0]
@@ -235,7 +235,7 @@ def write_readme_section(markdown: str) -> None:
         separator = "" if not text or text.endswith("\n\n") else "\n\n"
         text = text + separator + markdown + "\n"
 
-    README_PATH.write_text(text)
+    NOTES_PATH.write_text(text)
 
 
 def write_dev_answers(questions: list[dict], answers: list[Answer]) -> None:
@@ -287,8 +287,8 @@ def main() -> None:
 
     conn.close()
 
-    write_readme_section(render_markdown(summaries, questions))
-    print(f"\nWrote results to {README_PATH}")
+    write_results_section(render_markdown(summaries, questions))
+    print(f"\nWrote results to {NOTES_PATH}")
 
 
 if __name__ == "__main__":

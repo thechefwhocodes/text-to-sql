@@ -26,7 +26,6 @@ Role = Literal[SYSTEM_ROLE, USER_ROLE, ASSISTANT_ROLE, TOOL_ROLE]
 
 class Turn(ABC):
     """Base type every turn implements. Don't instantiate directly."""
-
     role: ClassVar[Role]
 
     def to_message(self) -> dict:

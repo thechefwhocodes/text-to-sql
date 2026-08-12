@@ -21,14 +21,11 @@ from src.utils import query_db
 @dataclass
 class ToolResult:
     """What running a tool produced."""
-
     content: str
-    rows: Optional[pd.DataFrame] = None
 
 
 class Tool(ABC):
     """Base type every tool implements. Don't instantiate directly."""
-
     name: str
     defination: str
     parameters: BaseModel
@@ -51,11 +48,7 @@ class Tool(ABC):
 
 class RunSQLArgs(BaseModel):
     """The arguments the model fills in to call run_sql."""
-
     sql: str = Field(description="A single read-only SQLite SELECT query.")
-    confidence: Literal["high", "medium", "low"] = Field(
-        description="How likely this query is to answer the question correctly."
-    )
 
 
 class RunSQLTool(Tool):
@@ -92,7 +85,7 @@ class RunSQLTool(Tool):
         content = json.dumps(
             {"row_count": len(rows), "rows": rows.to_dict("records")}, default=str
         )
-        return ToolResult(content=content, rows=rows)
+        return ToolResult(content=content)
 
 
 TOOLS: dict[str, Tool] = {tool.name: tool for tool in [RunSQLTool()]}

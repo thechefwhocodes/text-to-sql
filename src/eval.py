@@ -14,14 +14,13 @@ from pathlib import Path
 from src.agent import Agent
 from src.baseline import ask_baseline
 from src.llm import LLM
+from src.models import GPT_5_4, GPT_OSS_120B
 from src.utils import load_db
 
 QUESTIONS_PATH = Path("data/dev_questions_with_answers.json")
 CACHE_PATH = Path("data/eval_cache.json")
 ANSWERS_PATH = Path("data/dev_answers.json")
 
-AGENT_MODEL = "gpt-oss-120b"
-BASELINE_MODEL = "gpt-5.4"
 RUNS = 3
 QUERIES_PER_DAY = 30_000
 
@@ -63,7 +62,7 @@ def score(records: list[dict], expected: dict) -> dict:
 
 def run_agent_once(conn, questions: list[dict], llm: LLM) -> list[dict]:
     return [
-        to_record(q["id"], Agent(conn, model=AGENT_MODEL, llm=llm).ask(q["question"]))
+        to_record(q["id"], Agent(conn, model=GPT_OSS_120B, llm=llm).ask(q["question"]))
         for q in questions
     ]
 
@@ -74,7 +73,7 @@ def run_baseline_once(conn, questions, run_idx: int, cache: dict, llm: LLM) -> l
     for q in questions:
         key = f"{q['id']}_{run_idx}"
         if key not in cache:
-            answer = ask_baseline(conn, llm, q["question"], model=BASELINE_MODEL)
+            answer = ask_baseline(conn, llm, q["question"], model=GPT_5_4)
             cache[key] = to_record(q["id"], answer)
         records.append(cache[key])
     return records
@@ -113,12 +112,13 @@ def report_failures(name: str, records_per_run: list[list[dict]], expected: dict
 def main() -> None:
     questions = json.loads(QUESTIONS_PATH.read_text())
     expected = {q["id"]: q["expected_result"] for q in questions}
+    
     conn = load_db()
     llm = LLM()
 
     agent_records = [run_agent_once(conn, questions, llm) for _ in range(RUNS)]
-    report(f"Our agent ({AGENT_MODEL})", [score(r, expected) for r in agent_records])
-    report_failures(AGENT_MODEL, agent_records, expected)
+    report(f"Our agent ({GPT_OSS_120B})", [score(r, expected) for r in agent_records])
+    report_failures(GPT_OSS_120B, agent_records, expected)
 
     answers = {r["id"]: {"sql": r["sql"], "answer": r["text"]} for r in agent_records[0]}
     ANSWERS_PATH.write_text(json.dumps(answers, indent=2))
@@ -137,8 +137,8 @@ def main() -> None:
         print(f"\nSkipping baseline arm: {e}")
     else:
         CACHE_PATH.write_text(json.dumps(cache, indent=2, default=str))
-        report(f"Customer baseline ({BASELINE_MODEL})", [score(r, expected) for r in baseline_records])
-        report_failures(BASELINE_MODEL, baseline_records, expected)
+        report(f"Customer baseline ({GPT_5_4})", [score(r, expected) for r in baseline_records])
+        report_failures(GPT_5_4, baseline_records, expected)
 
     conn.close()
 

@@ -4,6 +4,9 @@ Catalog of models available to src.llm.LLM.
 
 from dataclasses import dataclass
 
+GPT_OSS_120B = "gpt-oss-120b"
+GPT_5_4 = "gpt-5.4"
+
 OPENAI_PROVIDER = "Open AI"
 FIREWORKS_PROVIDER = "Fireworks AI"
 
@@ -32,7 +35,7 @@ class ModelConfig:
 
 
 MODELS: dict[str, ModelConfig] = {
-    "gpt-oss-120b": ModelConfig(
+    GPT_OSS_120B: ModelConfig(
         id="accounts/fireworks/models/gpt-oss-120b",
         base_url=FIREWORKS_BASE_URL,
         api_key_env=FIREWORKS_API_KEY_ENV_VAR,
@@ -40,7 +43,7 @@ MODELS: dict[str, ModelConfig] = {
         input_price_per_million=0.15,
         output_price_per_million=0.60,
     ),
-    "gpt-5.4": ModelConfig(
+    GPT_5_4: ModelConfig(
         id="gpt-5.4-2026-03-05",
         base_url=OPENAI_BASE_URL,
         api_key_env=OPENAI_KEY_ENV_VAR,
@@ -50,7 +53,7 @@ MODELS: dict[str, ModelConfig] = {
     )
 }
 
-DEFAULT_MODEL = "gpt-oss-120b"
+DEFAULT_MODEL = GPT_OSS_120B
 
 
 def get_model(name: str) -> ModelConfig:

@@ -22,6 +22,7 @@ from src.utils import query_db
 class ToolResult:
     """What running a tool produced."""
     content: str
+    rows: Optional[pd.DataFrame] = None
 
 
 class Tool(ABC):
@@ -85,7 +86,7 @@ class RunSQLTool(Tool):
         content = json.dumps(
             {"row_count": len(rows), "rows": rows.to_dict("records")}, default=str
         )
-        return ToolResult(content=content)
+        return ToolResult(content=content, rows=rows)
 
 
 TOOLS: dict[str, Tool] = {tool.name: tool for tool in [RunSQLTool()]}

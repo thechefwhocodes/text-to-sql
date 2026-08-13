@@ -12,7 +12,7 @@ from pydantic import ValidationError
 
 from src.llm import LLM
 from src.models import DEFAULT_MODEL
-from src.tools import get_tool, tool_definations
+from src.tools import get_tool, tool_definitions
 from src.turns import Conversation, SystemTurn, ToolTurn, UserTurn, to_messages
 from src.utils import get_ddl
 
@@ -67,7 +67,7 @@ class Agent:
             turn = self.llm.chat( 
                 to_messages(self.conversation),
                 model=self.model,
-                tools=tool_definations(),
+                tools=tool_definitions(),
                 tool_choice="auto",
             )
             self.conversation.append(turn)

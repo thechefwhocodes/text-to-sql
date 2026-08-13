@@ -22,15 +22,15 @@ class ToolResult:
 class Tool(ABC):
     """Base type every tool implements. Don't instantiate directly."""
     name: str
-    defination: str
+    definition: str
     parameters: BaseModel
 
-    def to_defination(self) -> dict:
+    def to_definition(self) -> dict:
         return {
             "type": "function",
             "function": {
                 "name": self.name,
-                "description": self.defination,
+                "description": self.definition,
                 "parameters": self.parameters.model_json_schema(),
             },
         }
@@ -53,7 +53,7 @@ class RunSQLArgs(BaseModel):
 
 class RunSQLTool(Tool):
     name = "run_sql"
-    defination = "Run a read-only SQL query against the database and return the rows. Use this for any question about the data."
+    definition = "Run a read-only SQL query against the database and return the rows. Use this for any question about the data."
     parameters = RunSQLArgs
 
     def run(self, conn: sqlite3.Connection, args: dict) -> ToolResult:
@@ -99,5 +99,5 @@ def get_tool(name: str) -> Tool:
     return TOOLS[name]
 
 
-def tool_definations() -> list[dict]:
-    return [tool.to_defination() for tool in TOOLS.values()]
+def tool_definitions() -> list[dict]:
+    return [tool.to_definition() for tool in TOOLS.values()]

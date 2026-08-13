@@ -72,5 +72,7 @@ Your prototype missed the same 5 of 10 questions in every run — almost entirel
 
 Happy to walk through the code and the eval live, and get into what it takes to harden this for production.
 
+One note on process: I used Claude Code throughout this build — the architecture decisions were mine, and I reviewed and tested everything before calling it done.
+
 Best,
 Aashish

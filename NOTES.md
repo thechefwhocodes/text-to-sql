@@ -64,6 +64,10 @@ _None — every question was answered correctly in every run._
   (`turn.tool_calls[0]` in [`src/agent.py`](src/agent.py)). If the model ever requested two, the second would get no response.
 - **10 questions isn't enough to trust a single accuracy number.** That's why `eval.py` runs 3× and reports a range — but it's still a small, curated sample, not adversarial or representative of real usage.
 
+## AI Assistance
+
+Built with Claude Code throughout — implementation, iterating on the agent design, and this write-up. The architecture decisions (schema-in-prompt, tool-calling with retries, the eval methodology) were mine; I reviewed and tested everything before calling it done.
+
 ## What I'd Tackle Next
 
 - Fix the two-tool-call gap above (loop over all `tool_calls`, not just the first) before pointing this at a model/provider that supports it.

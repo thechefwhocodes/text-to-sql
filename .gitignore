@@ -3,3 +3,5 @@
 .vscode
 *.pyc
 uv.lock
+*.zip
+.DS_Store

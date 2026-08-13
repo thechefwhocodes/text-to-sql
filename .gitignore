@@ -1,4 +1,7 @@
 .env
 .venv
+.vscode
 *.pyc
 uv.lock
+*.zip
+.DS_Store

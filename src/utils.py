@@ -143,3 +143,10 @@ def print_table_schema(
             )
 
     print("=" * 100 + "\n")
+
+
+def get_ddl(conn: sqlite3.Connection) -> str:
+    rows = query_db(conn,
+        "SELECT sql FROM sqlite_master WHERE type='table' AND sql IS NOT NULL ORDER BY name",
+        return_as_df=False)
+    return "\n\n".join(r["sql"] for r in rows)

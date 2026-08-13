@@ -1,20 +1,39 @@
 """CLI entry point. Run with: uv run cli (or python -m src.cli)"""
 
+from src.agent import Agent
+from src.utils import load_db
 
-from src.utils import get_schema, load_db, print_table_schema
+BANNER = "Text-to-SQL CLI — ask a question about the database in plain English. Type 'exit' to quit."
 
 
 def main() -> None:
-    # TODO: implement your interactive CLI here
-    print("Hello from the Text-to-SQL CLI!")
-    print("Implement your CLI in src/cli.py")
+    conn = load_db()
+    agent = Agent(conn)
 
-    db_connection = load_db()
-    schemas = get_schema(db_connection)
-    tables = schemas.keys()
+    print(BANNER)
 
-    for table in tables:
-        print_table_schema(db_connection, table)
+    while True:
+        try:
+            question = input("> ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print()
+            break
+
+        if not question:
+            continue
+        if question.lower() in ("exit", "quit"):
+            break
+
+        answer = agent.ask(question)
+
+        if answer.sql:
+            print(f"\nSQL:\n{answer.sql}")
+        if answer.rows is not None:
+            print(f"\nRows:\n{answer.rows.to_string(index=False)}")
+
+        print(f"\n{answer.text}")
+
+    conn.close()
 
 
 if __name__ == "__main__":

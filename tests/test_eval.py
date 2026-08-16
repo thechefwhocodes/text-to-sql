@@ -1,17 +1,21 @@
 import pandas as pd
 
 from src.agent import Response
-from src.eval import is_correct, score_run, summarize
+from src.eval import _from_cache, _to_cache, is_correct, score_run, summarize
+from src.turns import TextToSQLToolTurn
 
 
 def make_answer(rows=None, latency_s=1.0, cost_usd=0.01):
+    tool_turn = None
+    if rows is not None:
+        tool_turn = TextToSQLToolTurn(
+            tool_call_id="call_1", content="", sql="SELECT 1", rows=pd.DataFrame(rows)
+        )
     return Response(
         text="",
-        sql=None,
-        rows=None if rows is None else pd.DataFrame(rows),
-        sql_attempts=1,
         latency_s=latency_s,
         cost_usd=cost_usd,
+        text_to_sql_tool_turn=tool_turn,
     )
 
 
@@ -131,3 +135,23 @@ def test_summarize_with_no_misses_reports_empty_dict():
 
     assert summary.accuracy == 1.0
     assert summary.misses == {}
+
+
+def test_cache_round_trip_preserves_correctness_for_a_successful_answer():
+    answer = make_answer(rows=[{"a": 1}])
+
+    restored = _from_cache(_to_cache(answer))
+
+    assert is_correct(restored, [{"a": 1}])
+    assert restored.text_to_sql_tool_turn.sql == "SELECT 1"
+
+
+def test_cache_round_trip_survives_a_question_that_never_called_the_tool():
+    """The baseline sometimes doesn't produce runnable SQL at all — the cache
+    must round-trip a None tool turn, not crash on it."""
+    answer = make_answer(rows=None)
+
+    restored = _from_cache(_to_cache(answer))
+
+    assert restored.text_to_sql_tool_turn is None
+    assert not is_correct(restored, [{"a": 1}])

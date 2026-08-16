@@ -38,9 +38,7 @@ def ask_baseline(
 
     return Response(
         text=turn.content,
-        sql=sql,
-        rows=result.rows,
-        sql_attempts=1,
         latency_s=turn.latency_s,
         cost_usd=turn.cost_usd,
+        text_to_sql_tool_turn=sql_tool.get_tool_turn("baseline", result),
     )

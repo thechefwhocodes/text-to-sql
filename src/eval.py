@@ -13,6 +13,7 @@ from src.agent import Agent, Response
 from src.baseline import ask_baseline
 from src.llm import LLM
 from src.models import GPT_5_4, GPT_OSS_120B
+from src.turns import TextToSQLToolTurn
 from src.utils import load_db
 
 QUESTIONS_PATH = Path("data/dev_questions_with_answers.json")
@@ -36,10 +37,11 @@ def is_correct(answer: Response, expected: list[dict]) -> bool:
     """Same values as the gold answer — column names, column count, float
     noise, and row order are all ignored, since many correct queries shape a
     result differently."""
-    if answer.rows is None:
+    tool_turn = answer.text_to_sql_tool_turn
+    if tool_turn is None or tool_turn.rows is None:
         return False
 
-    actual = answer.rows.to_dict("records")
+    actual = tool_turn.rows.to_dict("records")
     if len(actual) != len(expected):
         return False
 
@@ -111,27 +113,34 @@ def run_baseline_cached(
 
 
 def _to_cache(answer: Response) -> dict:
-    """Flatten an Answer to plain JSON — `rows` is a DataFrame, which isn't
-    serialisable, and everything else is already a plain type."""
+    """Flatten a Response to plain JSON — `rows` is a DataFrame, which isn't
+    serialisable, and the tool turn may not exist at all if the question never
+    touched the tool."""
+    tool_turn = answer.text_to_sql_tool_turn
     return {
         "text": answer.text,
-        "sql": answer.sql,
-        "rows": None if answer.rows is None else answer.rows.to_dict("records"),
-        "sql_attempts": answer.sql_attempts,
         "latency_s": answer.latency_s,
         "cost_usd": answer.cost_usd,
+        "sql": None if tool_turn is None else tool_turn.sql,
+        "rows": (
+            None if tool_turn is None or tool_turn.rows is None
+            else tool_turn.rows.to_dict("records")
+        ),
     }
 
 
 def _from_cache(entry: dict) -> Response:
-    rows = None if entry["rows"] is None else pd.DataFrame(entry["rows"])
+    tool_turn = None
+    if entry["sql"] is not None:
+        rows = None if entry["rows"] is None else pd.DataFrame(entry["rows"])
+        tool_turn = TextToSQLToolTurn(
+            tool_call_id="baseline", content="", sql=entry["sql"], rows=rows
+        )
     return Response(
         text=entry["text"],
-        sql=entry["sql"],
-        rows=rows,
-        sql_attempts=entry["sql_attempts"],
         latency_s=entry["latency_s"],
         cost_usd=entry["cost_usd"],
+        text_to_sql_tool_turn=tool_turn,
     )
 
 
@@ -251,7 +260,11 @@ def write_results_section(markdown: str) -> None:
 
 def write_dev_answers(questions: list[dict], answers: list[Response]) -> None:
     data = {
-        q["id"]: {"sql": a.sql, "answer": a.text} for q, a in zip(questions, answers)
+        q["id"]: {
+            "sql": None if a.text_to_sql_tool_turn is None else a.text_to_sql_tool_turn.sql,
+            "answer": a.text,
+        }
+        for q, a in zip(questions, answers)
     }
     ANSWERS_PATH.write_text(json.dumps(data, indent=2))
     print(f"\nWrote {ANSWERS_PATH}")

@@ -55,8 +55,9 @@ class UserTurn(Turn):
 
 @dataclass
 class ToolTurn(Turn):
-    """The result of a tool call."""
+    """The result of a tool call, reported back to the model."""
 
+    content: str
     tool_call_id: str
     role: ClassVar[Role] = TOOL_ROLE
 
@@ -64,6 +65,7 @@ class ToolTurn(Turn):
         return {
             "role": self.role,
             "tool_call_id": self.tool_call_id,
+            "content": self.content,
         }
 
 

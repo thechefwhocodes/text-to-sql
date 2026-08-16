@@ -1,42 +1,42 @@
 {
   "q_001": {
-    "sql": "SELECT g.Name AS Genre, SUM(il.UnitPrice * il.Quantity) AS TotalSales\nFROM InvoiceLine il\nJOIN Track t ON il.TrackId = t.TrackId\nJOIN Genre g ON t.GenreId = g.GenreId\nGROUP BY g.GenreId\nORDER BY TotalSales DESC\nLIMIT 5;",
-    "answer": "**Top 5 Best\u2011Selling Genres (by total sales)**  \n\n| Rank | Genre               | Total Sales (USD) |\n|------|---------------------|-------------------|\n| 1    | Rock                | $826.65 |\n| 2    | Latin               | $382.14 |\n| 3    | Metal               | $261.36 |\n| 4    | Alternative & Punk | $241.56 |\n| 5    | TV Shows            | $93.53 |\n\nThese figures are calculated by summing the line\u2011item revenue (`UnitPrice \u00d7 Quantity`) for every track sold, grouped by the track\u2019s genre."
+    "sql": "\nSELECT g.Name AS Genre, SUM(il.UnitPrice * il.Quantity) AS TotalSales\nFROM InvoiceLine il\nJOIN Track t ON il.TrackId = t.TrackId\nJOIN Genre g ON t.GenreId = g.GenreId\nGROUP BY g.GenreId, g.Name\nORDER BY TotalSales DESC\nLIMIT 5;\n",
+    "answer": "**Top 5 Best\u2011Selling Genres (by total sales)**  \n\n| Rank | Genre                | Total Sales (USD) |\n|------|----------------------|-------------------|\n| 1    | Rock                 | **$826.65** |\n| 2    | Latin                | **$382.14** |\n| 3    | Metal                | **$261.36** |\n| 4    | Alternative & Punk  | **$241.56** |\n| 5    | TV Shows             | **$93.53** |\n\nThese totals are calculated by summing the line\u2011item revenue (`UnitPrice \u00d7 Quantity`) for every track in each genre."
   },
   "q_002": {
-    "sql": "SELECT Album.Title FROM Album JOIN Artist ON Album.ArtistId = Artist.ArtistId WHERE Artist.Name = 'AC/DC' ORDER BY Album.Title",
-    "answer": "Here are the albums by **AC/DC**:\n\n| Album Title |\n|-------------|\n| For Those About To Rock We Salute You |\n| Let There Be Rock |"
+    "sql": "SELECT Album.Title FROM Album JOIN Artist ON Album.ArtistId = Artist.ArtistId WHERE Artist.Name = 'AC/DC' ORDER BY Album.Title;",
+    "answer": "**Albums by AC/DC**\n\n- For Those About To Rock We Salute You  \n- Let There Be Rock"
   },
   "q_003": {
-    "sql": "SELECT FirstName || ' ' || LastName AS Name, Email FROM Customer WHERE Country = 'Brazil';",
-    "answer": "**Customers from Brazil**\n\n| Name                | Email                              |\n|---------------------|------------------------------------|\n| Lu\u00eds Gon\u00e7alves      | luisg@embraer.com.br               |\n| Eduardo Martins     | eduardo@woodstock.com.br           |\n| Alexandre Rocha     | alero@uol.com.br                   |\n| Roberto Almeida     | roberto.almeida@riotur.gov.br      |\n| Fernanda Ramos      | fernadaramos4@uol.com.br           |"
+    "sql": "SELECT FirstName, LastName, Email FROM Customer WHERE Country = 'Brazil';",
+    "answer": "**Customers from Brazil**\n\n| First Name | Last Name | Email |\n|------------|-----------|-------------------------------|\n| Lu\u00eds | Gon\u00e7alves | luisg@embraer.com.br |\n| Eduardo | Martins | eduardo@woodstock.com.br |\n| Alexandre | Rocha | alero@uol.com.br |\n| Roberto | Almeida | roberto.almeida@riotur.gov.br |\n| Fernanda | Ramos | fernadaramos4@uol.com.br |"
   },
   "q_004": {
-    "sql": "SELECT mt.Name AS MediaType, COUNT(t.TrackId) AS TrackCount\nFROM Track t\nJOIN MediaType mt ON t.MediaTypeId = mt.MediaTypeId\nGROUP BY mt.MediaTypeId\nORDER BY TrackCount DESC\nLIMIT 1;",
-    "answer": "The most popular media type, based on the number of tracks, is **\u201cMPEG audio file\u201d** with **3,034 tracks**."
+    "sql": "SELECT mt.MediaTypeId, mt.Name, COUNT(t.TrackId) AS track_count\nFROM MediaType mt\nJOIN Track t ON t.MediaTypeId = mt.MediaTypeId\nGROUP BY mt.MediaTypeId, mt.Name\nORDER BY track_count DESC\nLIMIT 1;",
+    "answer": "The most popular media type, based on the number of tracks, is **\u201cMPEG audio file\u201d** (MediaTypeId\u202f=\u202f1) with **3,034 tracks**."
   },
   "q_005": {
-    "sql": "SELECT e.EmployeeId, e.FirstName, e.LastName, COUNT(c.CustomerId) AS customer_count\nFROM Employee e\nJOIN Customer c ON e.EmployeeId = c.SupportRepId\nGROUP BY e.EmployeeId\nORDER BY customer_count DESC\nLIMIT 1;",
-    "answer": "The employee with the most customers assigned is **Jane\u202fPeacock** (Employee\u202fId\u202f3) \u2013 she has **21** customers."
+    "sql": "SELECT e.EmployeeId, e.FirstName, e.LastName, COUNT(c.CustomerId) AS customer_count\nFROM Employee e\nLEFT JOIN Customer c ON e.EmployeeId = c.SupportRepId\nGROUP BY e.EmployeeId\nORDER BY customer_count DESC\nLIMIT 1;",
+    "answer": "The employee with the most customers assigned is **Jane Peacock** (EmployeeId\u202f=\u202f3), who has **21 customers**."
   },
   "q_006": {
-    "sql": "SELECT p.Name AS PlaylistName, COUNT(pt.TrackId) AS TrackCount\nFROM Playlist p\nLEFT JOIN PlaylistTrack pt ON p.PlaylistId = pt.PlaylistId\nGROUP BY p.PlaylistId, p.Name\nORDER BY p.Name;",
-    "answer": "Here is the number of tracks in each playlist:\n\n| Playlist | Track Count |\n|-------------------------------|------------|\n| 90\u2019s Music | 1\u202f477 |\n| Audiobooks | 0 |\n| Brazilian Music | 39 |\n| Classical | 75 |\n| Classical\u202f101\u202f\u2013\u202fDeep\u202fCuts | 25 |\n| Classical\u202f101\u202f\u2013\u202fNext\u202fSteps | 25 |\n| Classical\u202f101\u202f\u2013\u202fThe\u202fBasics | 25 |\n| Grunge | 15 |\n| Heavy\u202fMetal\u202fClassic | 26 |\n| Movies | 0 |\n| Music | 3\u202f290 |\n| Music\u202fVideos | 1 |\n| On\u2011The\u2011Go\u202f1 | 1 |\n| TV\u202fShows | 213 |\n\n(Playlists that appear more than once in the data have the same track count.)"
+    "sql": "SELECT p.PlaylistId, p.Name, COUNT(pt.TrackId) AS TrackCount\nFROM Playlist p\nLEFT JOIN PlaylistTrack pt ON p.PlaylistId = pt.PlaylistId\nGROUP BY p.PlaylistId, p.Name\nORDER BY p.PlaylistId;",
+    "answer": "Here is the number of tracks in each playlist:\n\n| PlaylistId | Playlist Name                     | Track Count |\n|-----------|-----------------------------------|-------------|\n| 1         | Music                             | 3,290 |\n| 2         | Movies                            | 0 |\n| 3         | TV Shows                          | 213 |\n| 4         | Audiobooks                        | 0 |\n| 5         | 90\u2019s Music                        | 1,477 |\n| 6         | Audiobooks                        | 0 |\n| 7         | Movies                            | 0 |\n| 8         | Music                             | 3,290 |\n| 9         | Music Videos                      | 1 |\n| 10        | TV Shows                          | 213 |\n| 11        | Brazilian Music                   | 39 |\n| 12        | Classical                         | 75 |\n| 13        | Classical 101 - Deep Cuts         | 25 |\n| 14        | Classical 101 - Next Steps        | 25 |\n| 15        | Classical 101 - The Basics        | 25 |\n| 16        | Grunge                            | 15 |\n| 17        | Heavy Metal Classic               | 26 |\n| 18        | On\u2011The\u2011Go 1                        | 1 |\n\nEach row shows a playlist\u2019s ID, its name, and the total number of tracks it contains."
   },
   "q_007": {
     "sql": "SELECT SUM(Total) AS TotalRevenue2021 FROM Invoice WHERE strftime('%Y', InvoiceDate) = '2021';",
-    "answer": "The total revenue generated in\u202f2021 is **$449.46**."
+    "answer": "The total revenue generated in **2021** was **$449.46**."
   },
   "q_008": {
-    "sql": "SELECT BillingCountry, ROUND(AVG(Total), 2) AS AverageTotal\nFROM Invoice\nGROUP BY BillingCountry\nORDER BY AverageTotal DESC;",
-    "answer": "**Average Invoice Total by Billing Country (Highest\u202f\u2192\u202fLowest)**  \n\n| Billing Country | Average Total |\n|-----------------|---------------|\n| Chile | 6.66 |\n| Ireland | 6.52 |\n| Hungary | 6.52 |\n| Czech Republic | 6.45 |\n| Austria | 6.09 |\n| Finland | 5.95 |\n| Netherlands | 5.80 |\n| India | 5.79 |\n| USA | 5.75 |\n| Norway | 5.66 |\n| Germany | 5.59 |\n| France | 5.57 |\n| Sweden | 5.52 |\n| Portugal | 5.52 |\n| Canada | 5.43 |\n| Brazil | 5.43 |\n| United Kingdom | 5.37 |\n| Spain | 5.37 |\n| Poland | 5.37 |\n| Italy | 5.37 |\n| Denmark | 5.37 |\n| Belgium | 5.37 |\n| Australia | 5.37 |\n| Argentina | 5.37 |\n\n*The averages are rounded to two decimal places.*"
+    "sql": "SELECT BillingCountry, ROUND(AVG(Total), 2) AS AvgTotal\nFROM Invoice\nGROUP BY BillingCountry\nORDER BY AvgTotal DESC;",
+    "answer": "**Average invoice total by billing country (highest \u2192 lowest)**  \n\n| Billing Country | Average Total |\n|-----------------|---------------|\n| Chile | 6.66 |\n| Ireland | 6.52 |\n| Hungary | 6.52 |\n| Czech Republic | 6.45 |\n| Austria | 6.09 |\n| Finland | 5.95 |\n| Netherlands | 5.80 |\n| India | 5.79 |\n| USA | 5.75 |\n| Norway | 5.66 |\n| Germany | 5.59 |\n| France | 5.57 |\n| Sweden | 5.52 |\n| Portugal | 5.52 |\n| Canada | 5.43 |\n| Brazil | 5.43 |\n| United Kingdom | 5.37 |\n| Spain | 5.37 |\n| Poland | 5.37 |\n| Italy | 5.37 |\n| Denmark | 5.37 |\n| Belgium | 5.37 |\n| Australia | 5.37 |\n| Argentina | 5.37 |\n\n*The averages are rounded to two decimal places.*"
   },
   "q_009": {
-    "sql": "WITH cust_spending AS (\n    SELECT c.CustomerId, c.FirstName, c.LastName, SUM(i.Total) AS total_spending\n    FROM Customer c\n    JOIN Invoice i ON c.CustomerId = i.CustomerId\n    GROUP BY c.CustomerId\n)\nSELECT CustomerId, FirstName, LastName, total_spending,\n       RANK() OVER (ORDER BY total_spending DESC) AS rank\nFROM cust_spending\nORDER BY total_spending DESC\nLIMIT 5;",
-    "answer": "**Top 5 customers by total spending**\n\n| Rank | CustomerId | First Name | Last Name | Total Spending |\n|------|------------|------------|-----------|----------------|\n| 1 | 6 | Helena | Hol\u00fd | $49.62 |\n| 2 | 26 | Richard | Cunningham | $47.62 |\n| 3 | 57 | Luis | Rojas | $46.62 |\n| 4 | 45 | Ladislav | Kov\u00e1cs | $45.62 |\n| 4 | 46 | Hugh | O'Reilly | $45.62 |\n\n*Ranks are calculated using `RANK()`, so ties share the same rank (e.g., customers\u202f45 and\u202f46 are tied for 4th place).*"
+    "sql": "WITH cust_spending AS (\n    SELECT c.CustomerId, c.FirstName, c.LastName,\n           SUM(i.Total) AS TotalSpending\n    FROM Customer c\n    JOIN Invoice i ON c.CustomerId = i.CustomerId\n    GROUP BY c.CustomerId\n)\nSELECT CustomerId, FirstName, LastName, TotalSpending,\n       ROW_NUMBER() OVER (ORDER BY TotalSpending DESC) AS Rank\nFROM cust_spending\nORDER BY TotalSpending DESC\nLIMIT 5;",
+    "answer": "**Top 5 customers by total spending**\n\n| Rank | CustomerId | First Name | Last Name | Total Spending |\n|------|------------|------------|-----------|----------------|\n| 1 | 6 | Helena | Hol\u00fd | $49.62 |\n| 2 | 26 | Richard | Cunningham | $47.62 |\n| 3 | 57 | Luis | Rojas | $46.62 |\n| 4 | 45 | Ladislav | Kov\u00e1cs | $45.62 |\n| 5 | 46 | Hugh | O'Reilly | $45.62 |\n\nThese customers are ranked from highest to lowest based on the sum of all their invoice totals."
   },
   "q_010": {
-    "sql": "SELECT ar.Name AS ArtistName, COUNT(DISTINCT t.GenreId) AS GenreCount\nFROM Artist ar\nJOIN Album al ON al.ArtistId = ar.ArtistId\nJOIN Track t ON t.AlbumId = al.AlbumId\nWHERE t.GenreId IS NOT NULL\nGROUP BY ar.ArtistId\nHAVING COUNT(DISTINCT t.GenreId) > 3\nORDER BY GenreCount DESC, ArtistName;",
-    "answer": "**Artists with tracks in more than 3 different genres**\n\n| Artist Name   | Number of Distinct Genres |\n|---------------|---------------------------|\n| Iron Maiden   | 4                         |"
+    "sql": "SELECT ar.Name AS ArtistName, COUNT(DISTINCT t.GenreId) AS GenreCount\nFROM Artist ar\nJOIN Album al ON al.ArtistId = ar.ArtistId\nJOIN Track t ON t.AlbumId = al.AlbumId\nWHERE t.GenreId IS NOT NULL\nGROUP BY ar.ArtistId, ar.Name\nHAVING COUNT(DISTINCT t.GenreId) > 3\nORDER BY GenreCount DESC, ArtistName;",
+    "answer": "**Artists with tracks spanning more than 3 different genres**\n\n| Artist Name   | Distinct Genres |\n|---------------|-----------------|\n| Iron Maiden   | 4 |"
   }
 }

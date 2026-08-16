@@ -49,5 +49,8 @@ class LLM:
         latency_s = time.perf_counter() - start
 
         return AgentTurn.from_completion(
-            completion, model=model, model_config=model_config, latency_s=latency_s
+            model=model,
+            latency_s=latency_s,
+            completion=completion,
+            model_config=model_config,
         )

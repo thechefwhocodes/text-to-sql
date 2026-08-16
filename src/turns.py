@@ -24,10 +24,10 @@ ASSISTANT_ROLE = "assistant"
 Role = Literal[SYSTEM_ROLE, USER_ROLE, ASSISTANT_ROLE, TOOL_ROLE]
 
 
-@dataclass
 class Turn(ABC):
     """Base type every turn implements. Don't instantiate directly."""
 
+    content: str | None
     role: ClassVar[Role]
 
 
@@ -64,8 +64,8 @@ class ToolTurn(Turn):
     def to_message(self) -> dict:
         return {
             "role": self.role,
-            "tool_call_id": self.tool_call_id,
             "content": self.content,
+            "tool_call_id": self.tool_call_id,
         }
 
 
@@ -88,21 +88,29 @@ class AgentTurn(Turn):
 
     @property
     def tool_calls(self) -> list | None:
-        """The tool calls the model made, or None when it replied with text."""
         return self.raw_message.tool_calls
 
+    @property
+    def content(self) -> str | None:
+        return None if self.tool_calls else self.raw_message.content
+
     def to_message(self) -> dict:
-        return self.raw_message.model_dump(
-            exclude_none=True
-        )  # role and content is already present inside raw_message
+        if self.tool_calls:
+            return {
+                "role": self.role,
+                "content": None,
+                "tool_calls": self.raw_message.tool_calls,
+            }
+
+        return {"role": self.role, "content": self.content}
 
     @classmethod
     def from_completion(
         cls,
-        completion: ChatCompletion,
         model: str,
         model_config: ModelConfig,
         latency_s: float,
+        completion: ChatCompletion,
     ) -> "AgentTurn":
         usage = completion.usage
         return cls(

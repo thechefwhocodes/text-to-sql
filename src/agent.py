@@ -10,7 +10,7 @@ from pydantic import ValidationError
 
 from src.llm import LLM
 from src.models import DEFAULT_MODEL
-from src.tools import TextToSQLToolResult, get_tool, tool_definitions
+from src.tools import get_tool, tool_definitions
 from src.turns import (
     AgentTurn,
     Conversation,

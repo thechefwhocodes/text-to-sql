@@ -12,11 +12,8 @@ from src.turns import TextToSQLToolTurn, ToolTurn
 from src.utils import query_db
 
 
-@dataclass
-class ToolResult:
+class ToolResult(ABC):
     """What running a tool produced."""
-
-    content: str
 
 
 class Tool(ABC):
@@ -74,10 +71,10 @@ class TextToSQLTool(Tool):
         self, tool_call_id: str, result: TextToSQLToolResult
     ) -> TextToSQLToolTurn:
         return TextToSQLToolTurn(
-            tool_call_id=tool_call_id,
-            content=result.content,
             sql=result.sql,
             rows=result.rows,
+            tool_call_id=tool_call_id,
+            content=json.dumps(result.rows.to_dict("records"), default=str),
         )
 
     def _check_sql(self, sql: str) -> None:
@@ -102,10 +99,7 @@ class TextToSQLTool(Tool):
         except (ValueError, sqlite3.Error, pd.errors.DatabaseError) as e:
             return TextToSQLToolResult(content=json.dumps({"error": str(e)}), sql=sql)
 
-        content = json.dumps(
-            {"row_count": len(rows), "rows": rows.to_dict("records")}, default=str
-        )
-        return TextToSQLToolResult(content=content, sql=sql, rows=rows)
+        return TextToSQLToolResult(sql=sql, rows=rows)
 
 
 TOOLS: dict[str, Tool] = {tool.name: tool for tool in [TextToSQLTool()]}

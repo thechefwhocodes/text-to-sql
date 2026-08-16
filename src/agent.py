@@ -5,15 +5,22 @@ Agent logic for text-to-SQL conversion.
 import json
 import sqlite3
 from dataclasses import dataclass
-from typing import Optional
 
-import pandas as pd
 from pydantic import ValidationError
 
 from src.llm import LLM
 from src.models import DEFAULT_MODEL
-from src.tools import get_tool, tool_definitions
-from src.turns import Conversation, SystemTurn, ToolTurn, UserTurn, to_messages
+from src.tools import TextToSQLToolResult, get_tool, tool_definitions
+from src.turns import (
+    AgentTurn,
+    Conversation,
+    SystemTurn,
+    TextToSQLToolTurn,
+    ToolTurn,
+    Turn,
+    UserTurn,
+    to_messages,
+)
 from src.utils import get_ddl
 
 SYSTEM_PROMPT = """
@@ -29,15 +36,31 @@ NO_ANSWER = "Sorry, I couldn't answer that one."
 
 
 @dataclass
-class Answer:
-    """What the agent produced for a single question."""
-
+class Response:
     text: str
-    sql: Optional[str]
-    rows: Optional[pd.DataFrame]
-    sql_attempts: int
     latency_s: float
     cost_usd: float
+    text_to_sql_tool_turn: TextToSQLToolTurn | None
+
+    def from_conversation(
+        conversation: Conversation, total_latency: float, total_cost_usd: float
+    ):
+        content = ""
+        turns: list[Turn] = reversed(conversation)  # reverse chronology of turns
+        for turn in turns:  # handle multiple tool calls
+            if isinstance(turn, TextToSQLToolTurn):
+                text_to_sql_tool_turn = turn
+                break
+
+        if isinstance(conversation[-1], AgentTurn):
+            content += conversation[-1].raw_message.content
+
+        return Response(
+            text=content,
+            latency_s=total_latency,
+            cost_usd=total_cost_usd,
+            text_to_sql_tool_turn=text_to_sql_tool_turn,
+        )
 
 
 class Agent:
@@ -47,60 +70,50 @@ class Agent:
         self,
         conn: sqlite3.Connection,
         model: str = DEFAULT_MODEL,
-        llm: Optional[LLM] = None,
+        llm: LLM | None = None,
     ):
         self.conn = conn
         self.model = model
         self.llm = llm or LLM()
         self.conversation: Conversation = [
-            SystemTurn(SYSTEM_PROMPT.format(ddl=get_ddl(conn)))
+            SystemTurn(content=SYSTEM_PROMPT.format(ddl=get_ddl(self.conn)))
         ]
 
-    def ask(self, question: str) -> Answer:
+    def ask(self, question: str) -> Response:
         """Answer one question, appending every turn to the conversation."""
         self.conversation.append(UserTurn(question))
 
-        text, sql, rows = NO_ANSWER, None, None
-        attempts, latency_s, cost_usd = 0, 0.0, 0.0
+        latency_s, cost_usd = 0.0, 0.0
 
         for _ in range(MAX_STEPS):
-            turn = self.llm.chat( 
+            turn = self.llm.chat(
                 to_messages(self.conversation),
                 model=self.model,
                 tools=tool_definitions(),
                 tool_choice="auto",
             )
-            self.conversation.append(turn)
+
+            self.conversation.append(turn)  # agent turn
             latency_s += turn.latency_s
             cost_usd += turn.cost_usd
 
-            if not turn.tool_calls:
-                text = turn.content
+            if not turn.tool_calls:  # if it's not a tool call, return
                 break
 
-            tool_call = turn.tool_calls[0]
+            tool_call = turn.tool_calls[0]  # fix me: handle multiple tool calls
             try:
                 tool = get_tool(tool_call.function.name)
                 args = tool.parse_tool_args(tool_call.function.arguments)
+                result = tool.run(self.conn, args)
+                self.conversation.append(tool.get_tool_turn(tool_call.id, result))
             except (json.JSONDecodeError, ValidationError) as e:
                 error = json.dumps({"error": f"Malformed tool call: {e}"})
-                self.conversation.append(ToolTurn(tool_call_id=tool_call.id, content=error))
-                continue
+                self.conversation.append(
+                    ToolTurn(tool_call_id=tool_call.id, content=error)
+                )
 
-            result = tool.run(self.conn, args)
-            attempts += 1
-
-            if result.rows is not None:
-                rows = result.rows
-            sql = args.get("sql") # for reporting Answer
-
-            self.conversation.append(ToolTurn(tool_call_id=tool_call.id, content=result.content))
-
-        return Answer(
-            text=text,
-            sql=sql,
-            rows=rows,
-            sql_attempts=attempts,
-            latency_s=latency_s,
-            cost_usd=cost_usd,
+        return Response.from_conversation(
+            conversation=self.conversation,
+            total_latency=latency_s,
+            total_cost_usd=cost_usd,
         )

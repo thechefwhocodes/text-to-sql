@@ -10,10 +10,10 @@ from abc import ABC
 from dataclasses import dataclass
 from typing import Any, ClassVar, Literal
 
+import pandas as pd
 from openai.types.chat import ChatCompletion
 
 from src.models import ModelConfig
-
 
 USER_ROLE = "user"
 TOOL_ROLE = "tool"
@@ -24,41 +24,65 @@ ASSISTANT_ROLE = "assistant"
 Role = Literal[SYSTEM_ROLE, USER_ROLE, ASSISTANT_ROLE, TOOL_ROLE]
 
 
+@dataclass
 class Turn(ABC):
     """Base type every turn implements. Don't instantiate directly."""
+
     role: ClassVar[Role]
+
+
+@dataclass
+class SystemTurn(Turn):
+    """The instructions and schema. Always the first turn in a conversation."""
+
+    content: str
+    role: ClassVar[Role] = SYSTEM_ROLE
 
     def to_message(self) -> dict:
         return {"role": self.role, "content": self.content}
 
 
 @dataclass
-class SystemTurn(Turn):
-    """The instructions and schema. Always the first turn in a conversation."""
+class UserTurn(Turn):
+    """A question typed by the user."""
+
     content: str
-    role: ClassVar[Role] = SYSTEM_ROLE
+    role: ClassVar[Role] = USER_ROLE
+
+    def to_message(self) -> dict:
+        return {"role": self.role, "content": self.content}
 
 
 @dataclass
-class UserTurn(Turn):
-    """A question typed by the user."""
-    content: str
-    role: ClassVar[Role] = USER_ROLE
+class ToolTurn(Turn):
+    """The result of a tool call."""
+
+    tool_call_id: str
+    role: ClassVar[Role] = TOOL_ROLE
+
+    def to_message(self) -> dict:
+        return {
+            "role": self.role,
+            "tool_call_id": self.tool_call_id,
+        }
+
+
+@dataclass
+class TextToSQLToolTurn(ToolTurn):
+    """The result of a text to sql tool turn, reported back to the model."""
+
+    sql: str
+    rows: pd.DataFrame | None
 
 
 @dataclass
 class AgentTurn(Turn):
-    raw_message: Any
     model: str
+    cost_usd: float
+    raw_message: Any
     latency_s: float
     total_tokens: int
-    cost_usd: float
     role: ClassVar[Role] = ASSISTANT_ROLE
-
-    @property
-    def content(self) -> str | None:
-        """The model's text. None when it answered with a tool call instead."""
-        return self.raw_message.content
 
     @property
     def tool_calls(self) -> list | None:
@@ -66,7 +90,9 @@ class AgentTurn(Turn):
         return self.raw_message.tool_calls
 
     def to_message(self) -> dict:
-        return self.raw_message.model_dump(exclude_none=True) # role and content is already present inside raw_message
+        return self.raw_message.model_dump(
+            exclude_none=True
+        )  # role and content is already present inside raw_message
 
     @classmethod
     def from_completion(
@@ -78,28 +104,12 @@ class AgentTurn(Turn):
     ) -> "AgentTurn":
         usage = completion.usage
         return cls(
-            raw_message=completion.choices[0].message,
             model=model,
             latency_s=latency_s,
             total_tokens=usage.total_tokens,
+            raw_message=completion.choices[0].message,
             cost_usd=model_config.cost(usage.prompt_tokens, usage.completion_tokens),
         )
-
-
-@dataclass
-class ToolTurn(Turn):
-    """The result of a tool call, reported back to the model."""
-
-    tool_call_id: str
-    content: str
-    role: ClassVar[Role] = TOOL_ROLE
-
-    def to_message(self) -> dict:
-        return {
-            "role": self.role,
-            "tool_call_id": self.tool_call_id,
-            "content": self.content,
-        }
 
 
 Conversation = list[Turn]

@@ -84,7 +84,9 @@ def test_agent_recovers_from_tool_call_missing_required_field(conn):
 
 
 def test_agent_runs_a_well_formed_tool_call(conn):
-    good_call = FakeToolCall("call_1", FakeFunction("run_sql", '{"sql": "SELECT * FROM items"}'))
+    good_call = FakeToolCall(
+        "call_1", FakeFunction("run_sql", '{"sql": "SELECT * FROM items"}')
+    )
     turns = [
         FakeTurn(content=None, tool_calls=[good_call]),
         FakeTurn(content="Found one row.", tool_calls=None),

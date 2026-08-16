@@ -33,7 +33,9 @@ class LLM:
             )
         return self._clients[key]
 
-    def chat(self, messages: list[dict], model: str = DEFAULT_MODEL, **kwargs) -> AgentTurn:
+    def chat(
+        self, messages: list[dict], model: str = DEFAULT_MODEL, **kwargs
+    ) -> AgentTurn:
         """Send a chat completion request. Extra kwargs (temperature, tools, ...) pass through."""
         model_config = get_model(model)
         client = self._client_for(model_config)

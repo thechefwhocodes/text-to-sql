@@ -4,7 +4,7 @@ import sqlite3
 import pytest
 from pydantic import ValidationError
 
-from src.tools import RunSQLTool
+from src.tools import TextToSQLTool
 
 
 @pytest.fixture
@@ -19,7 +19,7 @@ def conn():
 
 @pytest.fixture
 def tool():
-    return RunSQLTool()
+    return TextToSQLTool()
 
 
 def test_check_sql_allows_select(tool):

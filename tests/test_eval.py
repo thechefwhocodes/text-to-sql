@@ -1,11 +1,11 @@
 import pandas as pd
 
-from src.agent import Answer
+from src.agent import Response
 from src.eval import is_correct, score_run, summarize
 
 
 def make_answer(rows=None, latency_s=1.0, cost_usd=0.01):
-    return Answer(
+    return Response(
         text="",
         sql=None,
         rows=None if rows is None else pd.DataFrame(rows),
@@ -47,7 +47,14 @@ def test_is_correct_true_when_actual_has_an_extra_unrequested_column():
     # real case: agent's q_005 answer included EmployeeId alongside the
     # requested name and count
     answer = make_answer(
-        rows=[{"EmployeeId": 3, "FirstName": "Jane", "LastName": "Peacock", "CustomerCount": 21}]
+        rows=[
+            {
+                "EmployeeId": 3,
+                "FirstName": "Jane",
+                "LastName": "Peacock",
+                "CustomerCount": 21,
+            }
+        ]
     )
     expected = [{"EmployeeName": "Jane Peacock", "CustomerCount": 21}]
     assert is_correct(answer, expected)
@@ -55,7 +62,11 @@ def test_is_correct_true_when_actual_has_an_extra_unrequested_column():
 
 def test_is_correct_true_when_gold_column_is_split_across_actual_columns():
     # real case: agent's q_009 answer split CustomerName into FirstName/LastName
-    answer = make_answer(rows=[{"FirstName": "Helena", "LastName": "Holý", "TotalSpent": 49.62, "Rank": 1}])
+    answer = make_answer(
+        rows=[
+            {"FirstName": "Helena", "LastName": "Holý", "TotalSpent": 49.62, "Rank": 1}
+        ]
+    )
     expected = [{"CustomerName": "Helena Holý", "TotalSpent": 49.62, "Rank": 1}]
     assert is_correct(answer, expected)
 
@@ -87,7 +98,10 @@ def test_summarize_computes_accuracy_and_misses():
         {"id": "q1", "expected_result": [{"a": 1}]},
         {"id": "q2", "expected_result": [{"a": 1}]},
     ]
-    answers = [make_answer(rows=[{"a": 1}]), make_answer(rows=[{"a": 2}])]  # q1 right, q2 wrong
+    answers = [
+        make_answer(rows=[{"a": 1}]),
+        make_answer(rows=[{"a": 2}]),
+    ]  # q1 right, q2 wrong
 
     summary = summarize("test", score_run(questions, answers))
 

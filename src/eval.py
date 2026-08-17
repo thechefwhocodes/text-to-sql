@@ -10,13 +10,12 @@ from pathlib import Path
 import pandas as pd
 
 from src.agent import Agent, Response
-from src.baseline import ask_baseline
+from src.baseline import QUESTIONS_PATH, ask_baseline
 from src.llm import LLM
 from src.models import GPT_5_4, GPT_OSS_120B
 from src.turns import TextToSQLToolTurn
 from src.utils import load_db
 
-QUESTIONS_PATH = Path("data/dev_questions_with_answers.json")
 CACHE_PATH = Path("data/eval_cache.json")
 ANSWERS_PATH = Path("data/dev_answers.json")
 NOTES_PATH = Path("NOTES.md")
@@ -123,7 +122,8 @@ def _to_cache(answer: Response) -> dict:
         "cost_usd": answer.cost_usd,
         "sql": None if tool_turn is None else tool_turn.sql,
         "rows": (
-            None if tool_turn is None or tool_turn.rows is None
+            None
+            if tool_turn is None or tool_turn.rows is None
             else tool_turn.rows.to_dict("records")
         ),
     }
@@ -261,7 +261,9 @@ def write_results_section(markdown: str) -> None:
 def write_dev_answers(questions: list[dict], answers: list[Response]) -> None:
     data = {
         q["id"]: {
-            "sql": None if a.text_to_sql_tool_turn is None else a.text_to_sql_tool_turn.sql,
+            "sql": None
+            if a.text_to_sql_tool_turn is None
+            else a.text_to_sql_tool_turn.sql,
             "answer": a.text,
         }
         for q, a in zip(questions, answers)

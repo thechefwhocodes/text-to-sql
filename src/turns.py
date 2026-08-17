@@ -30,6 +30,9 @@ class Turn(ABC):
     content: str | None
     role: ClassVar[Role]
 
+    def to_message(self) -> dict:
+        return {"role": self.role, "content": self.content}
+
 
 @dataclass
 class SystemTurn(Turn):
@@ -38,9 +41,6 @@ class SystemTurn(Turn):
     content: str
     role: ClassVar[Role] = SYSTEM_ROLE
 
-    def to_message(self) -> dict:
-        return {"role": self.role, "content": self.content}
-
 
 @dataclass
 class UserTurn(Turn):
@@ -48,9 +48,6 @@ class UserTurn(Turn):
 
     content: str
     role: ClassVar[Role] = USER_ROLE
-
-    def to_message(self) -> dict:
-        return {"role": self.role, "content": self.content}
 
 
 @dataclass

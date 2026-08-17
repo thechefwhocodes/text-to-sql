@@ -50,6 +50,7 @@ class Tool(ABC):
 @dataclass
 class TextToSQLToolResult(ToolResult):
     sql: str
+    error: str | None = None
     rows: pd.DataFrame | None = None
 
 
@@ -70,6 +71,14 @@ class TextToSQLTool(Tool):
     def get_tool_turn(
         self, tool_call_id: str, result: TextToSQLToolResult
     ) -> TextToSQLToolTurn:
+        if result.error:
+            return TextToSQLToolTurn(
+                sql=result.sql,
+                rows=None,
+                tool_call_id=tool_call_id,
+                content=result.error,
+            )
+
         return TextToSQLToolTurn(
             sql=result.sql,
             rows=result.rows,
@@ -97,7 +106,7 @@ class TextToSQLTool(Tool):
             self._check_sql(sql)
             rows = query_db(conn, sql)
         except (ValueError, sqlite3.Error, pd.errors.DatabaseError) as e:
-            return TextToSQLToolResult(content=json.dumps({"error": str(e)}), sql=sql)
+            return TextToSQLToolResult(error=json.dumps({"error": str(e)}), sql=sql)
 
         return TextToSQLToolResult(sql=sql, rows=rows)
 

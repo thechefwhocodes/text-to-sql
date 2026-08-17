@@ -2,13 +2,18 @@
 The customer's current prototype: one prompt, no schema, no tools.
 """
 
+import json
 import sqlite3
+from pathlib import Path
 
 from src.agent import Response
 from src.llm import LLM
+from src.models import GPT_5_4
 from src.tools import TextToSQLTool
 from src.turns import USER_ROLE
+from src.utils import load_db
 
+QUESTIONS_PATH = Path("data/dev_questions_with_answers.json")
 BASELINE_PROMPT = "Convert this question to SQL:\n{question}"
 
 
@@ -18,8 +23,7 @@ def extract_sql(text: str) -> str:
         return text.strip()
 
     block = text.split("```")[1]
-    if block.startswith("sql"):
-        block = block[len("sql") :]
+    block = block.removeprefix("sql")
     return block.strip()
 
 
@@ -42,3 +46,11 @@ def ask_baseline(
         cost_usd=turn.cost_usd,
         text_to_sql_tool_turn=sql_tool.get_tool_turn("baseline", result),
     )
+
+
+if __name__ == "__main__":
+    llm = LLM()
+    conn = load_db()
+    questions = json.loads(QUESTIONS_PATH.read_text())
+    response = ask_baseline(conn, llm, questions[1]["question"], model=GPT_5_4)
+    print(response)

@@ -102,7 +102,11 @@ class Agent:
             cost_usd += turn.cost_usd
 
             if not turn.tool_calls:  # if it's not a tool call, return
-                break
+                return Response.from_conversation(
+                    conversation=self.conversation[turn_start:],
+                    total_latency=latency_s,
+                    total_cost_usd=cost_usd,
+                )
 
             tool_call = turn.tool_calls[0]  # fix me: handle multiple tool calls
             try:
@@ -116,8 +120,4 @@ class Agent:
                     ToolTurn(tool_call_id=tool_call.id, content=error)
                 )
 
-        return Response.from_conversation(
-            conversation=self.conversation[turn_start:],
-            total_latency=latency_s,
-            total_cost_usd=cost_usd,
-        )
+        return Response(text=NO_ANSWER, latency_s=latency_s, cost_usd=cost_usd)

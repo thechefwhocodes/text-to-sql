@@ -4,8 +4,8 @@ Catalog of models available to src.llm.LLM.
 
 from dataclasses import dataclass
 
-GPT_OSS_120B = "gpt-oss-120b"
 GPT_5_4 = "gpt-5.4"
+GPT_OSS_120B = "gpt-oss-120b"
 
 OPENAI_PROVIDER = "Open AI"
 FIREWORKS_PROVIDER = "Fireworks AI"

@@ -120,4 +120,9 @@ class Agent:
                     ToolTurn(tool_call_id=tool_call.id, content=error)
                 )
 
-        return Response(text=NO_ANSWER, latency_s=latency_s, cost_usd=cost_usd)
+        return Response(
+            text=NO_ANSWER,
+            latency_s=latency_s,
+            cost_usd=cost_usd,
+            text_to_sql_tool_turn=None,
+        )

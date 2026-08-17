@@ -52,14 +52,14 @@ def test_run_sql_returns_rows(tool, conn):
 def test_run_sql_returns_error_content_for_write_statement(tool, conn):
     result = tool.run_sql(conn, "DROP TABLE items")
     assert result.rows is None
-    assert "error" in json.loads(result.content)
+    assert "error" in json.loads(result.error)
     assert result.sql == "DROP TABLE items"  # the attempted SQL is still recorded
 
 
 def test_run_sql_returns_error_content_for_bad_syntax(tool, conn):
     result = tool.run_sql(conn, "SELECT * FROM not_a_table")
     assert result.rows is None
-    assert "error" in json.loads(result.content)
+    assert "error" in json.loads(result.error)
     assert result.sql == "SELECT * FROM not_a_table"
 
 
@@ -83,19 +83,19 @@ def test_parse_tool_args_raises_on_schema_mismatch(tool):
 
 
 def test_get_tool_turn_carries_the_tool_result_content(tool, conn):
-    """The tool turn must carry the same `content` the model needs to see —
-    dropping it means the model gets a tool response with no body."""
+    """The tool turn's `content` is what the model actually sees — it must
+    reflect the real rows, not come back empty or dropped."""
     result = tool.run_sql(conn, "SELECT * FROM items ORDER BY id")
 
     turn = tool.get_tool_turn("call_1", result)
 
-    assert turn.content == result.content
+    assert json.loads(turn.content) == result.rows.to_dict("records")
     assert turn.sql == "SELECT * FROM items ORDER BY id"
     assert turn.rows.to_dict("records") == result.rows.to_dict("records")
     assert turn.to_message() == {
         "role": "tool",
         "tool_call_id": "call_1",
-        "content": result.content,
+        "content": turn.content,
     }
 
 

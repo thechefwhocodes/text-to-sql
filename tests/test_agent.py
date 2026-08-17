@@ -4,7 +4,7 @@ from typing import Optional
 
 import pytest
 
-from src.agent import Agent
+from src.agent import MAX_STEPS, NO_ANSWER, Agent
 from src.turns import AgentTurn
 
 
@@ -182,3 +182,19 @@ def test_agent_does_not_leak_tool_turn_across_questions(conn):
 
     assert first.text_to_sql_tool_turn is not None
     assert second.text_to_sql_tool_turn is None
+
+
+def test_agent_gives_up_gracefully_after_exhausting_all_retries(conn):
+    """If the model never stops calling the tool within MAX_STEPS (e.g. it
+    keeps hitting the same error), the agent must still return a Response —
+    not crash — even though no final text answer was ever produced."""
+    bad_call = FakeToolCall(
+        "call_1", FakeFunction("run_sql", '{"sql": "SELECT * FROM not_a_table"}')
+    )
+    turns = [fake_agent_turn(tool_calls=[bad_call]) for _ in range(MAX_STEPS)]
+    agent = Agent(conn, llm=FakeLLM(turns))
+
+    answer = agent.ask("does not matter")
+
+    assert answer.text == NO_ANSWER
+    assert answer.text_to_sql_tool_turn is None

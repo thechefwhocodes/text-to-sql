@@ -40,7 +40,7 @@ def test_ask_baseline_runs_the_extracted_sql_and_reports_a_tool_turn():
     conn.commit()
 
     llm = FakeLLM("```sql\nSELECT * FROM items\n```")
-    answer = ask_baseline(conn, llm, "how many items?", model="fake-model")
+    answer = ask_baseline(conn, "how many items?", llm=llm, model="fake-model")
 
     assert answer.text == "```sql\nSELECT * FROM items\n```"
     assert answer.text_to_sql_tool_turn.sql == "SELECT * FROM items"
@@ -55,7 +55,7 @@ def test_ask_baseline_reports_a_tool_turn_even_when_the_sql_is_invalid():
     conn = sqlite3.connect(":memory:")
 
     llm = FakeLLM("SELECT * FROM made_up_table")
-    answer = ask_baseline(conn, llm, "how many items?", model="fake-model")
+    answer = ask_baseline(conn, "how many items?", llm=llm, model="fake-model")
 
     assert answer.text_to_sql_tool_turn is not None
     assert answer.text_to_sql_tool_turn.rows is None

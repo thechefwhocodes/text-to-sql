@@ -56,5 +56,5 @@ if __name__ == "__main__":
     llm = LLM()
     conn = load_db()
     questions = json.loads(QUESTIONS_PATH.read_text())
-    response = ask_baseline(conn, llm, questions[1]["question"], model=GPT_5_4)
+    response = ask_baseline(conn, questions[1]["question"], llm=llm, model=GPT_5_4)
     print(response)

@@ -105,7 +105,7 @@ def run_baseline_cached(
         key = f"{q['id']}_{run_idx}"
         if key not in cache:
             cache[key] = _to_cache(
-                ask_baseline(conn, llm, q["question"], model=GPT_5_4)
+                ask_baseline(conn, q["question"], llm=llm, model=GPT_5_4)
             )
         answers.append(_from_cache(cache[key]))
     return answers

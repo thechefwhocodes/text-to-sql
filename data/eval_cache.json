@@ -1,7 +1,9 @@
 {
   "q_001_0": {
-    "text": "```sql\nSELECT\n  g.Name AS genre,\n  SUM(il.UnitPrice * il.Quantity) AS total_sales\nFROM InvoiceLine il\nJOIN Track t\n  ON il.TrackId = t.TrackId\nJOIN Genre g\n  ON t.GenreId = g.GenreId\nGROUP BY g.GenreId, g.Name\nORDER BY total_sales DESC\nLIMIT 5;\n```",
-    "sql": "SELECT\n  g.Name AS genre,\n  SUM(il.UnitPrice * il.Quantity) AS total_sales\nFROM InvoiceLine il\nJOIN Track t\n  ON il.TrackId = t.TrackId\nJOIN Genre g\n  ON t.GenreId = g.GenreId\nGROUP BY g.GenreId, g.Name\nORDER BY total_sales DESC\nLIMIT 5;",
+    "text": "```sql\nSELECT\n  g.Name AS genre,\n  SUM(ii.UnitPrice * ii.Quantity) AS total_sales\nFROM InvoiceLine ii\nJOIN Track t\n  ON ii.TrackId = t.TrackId\nJOIN Genre g\n  ON t.GenreId = g.GenreId\nGROUP BY g.GenreId, g.Name\nORDER BY total_sales DESC\nLIMIT 5;\n```",
+    "latency_s": 1.8942680000327528,
+    "cost_usd": 0.0013075,
+    "sql": "SELECT\n  g.Name AS genre,\n  SUM(ii.UnitPrice * ii.Quantity) AS total_sales\nFROM InvoiceLine ii\nJOIN Track t\n  ON ii.TrackId = t.TrackId\nJOIN Genre g\n  ON t.GenreId = g.GenreId\nGROUP BY g.GenreId, g.Name\nORDER BY total_sales DESC\nLIMIT 5;",
     "rows": [
       {
         "genre": "Rock",
@@ -23,648 +25,45 @@
         "genre": "TV Shows",
         "total_sales": 93.53
       }
-    ],
-    "sql_attempts": 1,
-    "latency_s": 2.3521474579465576,
-    "cost_usd": 0.0013075
+    ]
   },
   "q_002_0": {
     "text": "```sql\nSELECT *\nFROM albums\nWHERE artist = 'AC/DC';\n```",
+    "latency_s": 0.9186674579977989,
+    "cost_usd": 0.00034,
     "sql": "SELECT *\nFROM albums\nWHERE artist = 'AC/DC';",
-    "rows": null,
-    "sql_attempts": 1,
-    "latency_s": 1.14668674999848,
-    "cost_usd": 0.00034
+    "rows": null
   },
   "q_003_0": {
-    "text": "```sql\nSELECT name, email\nFROM customers\nWHERE country = 'Brazil';\n```",
-    "sql": "SELECT name, email\nFROM customers\nWHERE country = 'Brazil';",
-    "rows": null,
-    "sql_attempts": 1,
-    "latency_s": 1.0812408750061877,
-    "cost_usd": 0.000375
+    "text": "```sql\nSELECT Name, Email\nFROM Customers\nWHERE Country = 'Brazil';\n```",
+    "latency_s": 0.7253620839910582,
+    "cost_usd": 0.000375,
+    "sql": "SELECT Name, Email\nFROM Customers\nWHERE Country = 'Brazil';",
+    "rows": null
   },
   "q_004_0": {
-    "text": "```sql\nSELECT\n  mt.Name AS media_type,\n  COUNT(t.TrackId) AS track_count\nFROM MediaType mt\nJOIN Track t\n  ON t.MediaTypeId = mt.MediaTypeId\nGROUP BY mt.MediaTypeId, mt.Name\nORDER BY track_count DESC\nLIMIT 1;\n```",
-    "sql": "SELECT\n  mt.Name AS media_type,\n  COUNT(t.TrackId) AS track_count\nFROM MediaType mt\nJOIN Track t\n  ON t.MediaTypeId = mt.MediaTypeId\nGROUP BY mt.MediaTypeId, mt.Name\nORDER BY track_count DESC\nLIMIT 1;",
-    "rows": [
-      {
-        "media_type": "MPEG audio file",
-        "track_count": 3034
-      }
-    ],
-    "sql_attempts": 1,
-    "latency_s": 1.4105782080441713,
-    "cost_usd": 0.0010675
-  },
-  "q_005_0": {
-    "text": "```sql\nSELECT e.employee_id,\n       e.first_name,\n       e.last_name,\n       COUNT(c.customer_id) AS customer_count\nFROM employees e\nJOIN customers c\n  ON c.support_rep_id = e.employee_id\nGROUP BY e.employee_id, e.first_name, e.last_name\nORDER BY customer_count DESC\nLIMIT 1;\n```",
-    "sql": "SELECT e.employee_id,\n       e.first_name,\n       e.last_name,\n       COUNT(c.customer_id) AS customer_count\nFROM employees e\nJOIN customers c\n  ON c.support_rep_id = e.employee_id\nGROUP BY e.employee_id, e.first_name, e.last_name\nORDER BY customer_count DESC\nLIMIT 1;",
-    "rows": null,
-    "sql_attempts": 1,
-    "latency_s": 1.048969750001561,
-    "cost_usd": 0.00118
-  },
-  "q_006_0": {
-    "text": "```sql\nSELECT\n  p.PlaylistId,\n  p.Name AS PlaylistName,\n  COUNT(pt.TrackId) AS TrackCount\nFROM Playlist AS p\nLEFT JOIN PlaylistTrack AS pt\n  ON p.PlaylistId = pt.PlaylistId\nGROUP BY\n  p.PlaylistId,\n  p.Name;\n```",
-    "sql": "SELECT\n  p.PlaylistId,\n  p.Name AS PlaylistName,\n  COUNT(pt.TrackId) AS TrackCount\nFROM Playlist AS p\nLEFT JOIN PlaylistTrack AS pt\n  ON p.PlaylistId = pt.PlaylistId\nGROUP BY\n  p.PlaylistId,\n  p.Name;",
-    "rows": [
-      {
-        "PlaylistId": 1,
-        "PlaylistName": "Music",
-        "TrackCount": 3290
-      },
-      {
-        "PlaylistId": 2,
-        "PlaylistName": "Movies",
-        "TrackCount": 0
-      },
-      {
-        "PlaylistId": 3,
-        "PlaylistName": "TV Shows",
-        "TrackCount": 213
-      },
-      {
-        "PlaylistId": 4,
-        "PlaylistName": "Audiobooks",
-        "TrackCount": 0
-      },
-      {
-        "PlaylistId": 5,
-        "PlaylistName": "90\u2019s Music",
-        "TrackCount": 1477
-      },
-      {
-        "PlaylistId": 6,
-        "PlaylistName": "Audiobooks",
-        "TrackCount": 0
-      },
-      {
-        "PlaylistId": 7,
-        "PlaylistName": "Movies",
-        "TrackCount": 0
-      },
-      {
-        "PlaylistId": 8,
-        "PlaylistName": "Music",
-        "TrackCount": 3290
-      },
-      {
-        "PlaylistId": 9,
-        "PlaylistName": "Music Videos",
-        "TrackCount": 1
-      },
-      {
-        "PlaylistId": 10,
-        "PlaylistName": "TV Shows",
-        "TrackCount": 213
-      },
-      {
-        "PlaylistId": 11,
-        "PlaylistName": "Brazilian Music",
-        "TrackCount": 39
-      },
-      {
-        "PlaylistId": 12,
-        "PlaylistName": "Classical",
-        "TrackCount": 75
-      },
-      {
-        "PlaylistId": 13,
-        "PlaylistName": "Classical 101 - Deep Cuts",
-        "TrackCount": 25
-      },
-      {
-        "PlaylistId": 14,
-        "PlaylistName": "Classical 101 - Next Steps",
-        "TrackCount": 25
-      },
-      {
-        "PlaylistId": 15,
-        "PlaylistName": "Classical 101 - The Basics",
-        "TrackCount": 25
-      },
-      {
-        "PlaylistId": 16,
-        "PlaylistName": "Grunge",
-        "TrackCount": 15
-      },
-      {
-        "PlaylistId": 17,
-        "PlaylistName": "Heavy Metal Classic",
-        "TrackCount": 26
-      },
-      {
-        "PlaylistId": 18,
-        "PlaylistName": "On-The-Go 1",
-        "TrackCount": 1
-      }
-    ],
-    "sql_attempts": 1,
-    "latency_s": 1.1385454999981448,
-    "cost_usd": 0.0010875
-  },
-  "q_007_0": {
-    "text": "```sql\nSELECT SUM(revenue) AS total_revenue\nFROM your_table_name\nWHERE EXTRACT(YEAR FROM revenue_date) = 2021;\n```\n\nIf your table has a date column with a different name, replace `revenue_date` accordingly.",
-    "sql": "SELECT SUM(revenue) AS total_revenue\nFROM your_table_name\nWHERE EXTRACT(YEAR FROM revenue_date) = 2021;",
-    "rows": null,
-    "sql_attempts": 1,
-    "latency_s": 1.2187122499453835,
-    "cost_usd": 0.0009175
-  },
-  "q_008_0": {
-    "text": "```sql\nSELECT\n  BillingCountry,\n  AVG(Total) AS AverageInvoiceTotal\nFROM Invoice\nGROUP BY BillingCountry\nORDER BY AverageInvoiceTotal DESC;\n```",
-    "sql": "SELECT\n  BillingCountry,\n  AVG(Total) AS AverageInvoiceTotal\nFROM Invoice\nGROUP BY BillingCountry\nORDER BY AverageInvoiceTotal DESC;",
-    "rows": [
-      {
-        "BillingCountry": "Chile",
-        "AverageInvoiceTotal": 6.659999999999999
-      },
-      {
-        "BillingCountry": "Ireland",
-        "AverageInvoiceTotal": 6.517142857142857
-      },
-      {
-        "BillingCountry": "Hungary",
-        "AverageInvoiceTotal": 6.517142857142857
-      },
-      {
-        "BillingCountry": "Czech Republic",
-        "AverageInvoiceTotal": 6.445714285714286
-      },
-      {
-        "BillingCountry": "Austria",
-        "AverageInvoiceTotal": 6.088571428571428
-      },
-      {
-        "BillingCountry": "Finland",
-        "AverageInvoiceTotal": 5.945714285714286
-      },
-      {
-        "BillingCountry": "Netherlands",
-        "AverageInvoiceTotal": 5.8028571428571425
-      },
-      {
-        "BillingCountry": "India",
-        "AverageInvoiceTotal": 5.78923076923077
-      },
-      {
-        "BillingCountry": "USA",
-        "AverageInvoiceTotal": 5.747912087912088
-      },
-      {
-        "BillingCountry": "Norway",
-        "AverageInvoiceTotal": 5.659999999999999
-      },
-      {
-        "BillingCountry": "Germany",
-        "AverageInvoiceTotal": 5.588571428571428
-      },
-      {
-        "BillingCountry": "France",
-        "AverageInvoiceTotal": 5.574285714285714
-      },
-      {
-        "BillingCountry": "Sweden",
-        "AverageInvoiceTotal": 5.517142857142857
-      },
-      {
-        "BillingCountry": "Portugal",
-        "AverageInvoiceTotal": 5.517142857142857
-      },
-      {
-        "BillingCountry": "Brazil",
-        "AverageInvoiceTotal": 5.4314285714285715
-      },
-      {
-        "BillingCountry": "Canada",
-        "AverageInvoiceTotal": 5.4278571428571425
-      },
-      {
-        "BillingCountry": "United Kingdom",
-        "AverageInvoiceTotal": 5.3742857142857146
-      },
-      {
-        "BillingCountry": "Spain",
-        "AverageInvoiceTotal": 5.374285714285714
-      },
-      {
-        "BillingCountry": "Poland",
-        "AverageInvoiceTotal": 5.374285714285714
-      },
-      {
-        "BillingCountry": "Italy",
-        "AverageInvoiceTotal": 5.374285714285714
-      },
-      {
-        "BillingCountry": "Denmark",
-        "AverageInvoiceTotal": 5.374285714285714
-      },
-      {
-        "BillingCountry": "Belgium",
-        "AverageInvoiceTotal": 5.374285714285714
-      },
-      {
-        "BillingCountry": "Australia",
-        "AverageInvoiceTotal": 5.374285714285714
-      },
-      {
-        "BillingCountry": "Argentina",
-        "AverageInvoiceTotal": 5.374285714285714
-      }
-    ],
-    "sql_attempts": 1,
-    "latency_s": 0.6718686670064926,
-    "cost_usd": 0.0006425
-  },
-  "q_009_0": {
-    "text": "```sql\nSELECT\n  customer_id,\n  total_spending,\n  RANK() OVER (ORDER BY total_spending DESC) AS spending_rank\nFROM (\n  SELECT\n    customer_id,\n    SUM(amount) AS total_spending\n  FROM orders\n  GROUP BY customer_id\n) t\nORDER BY total_spending DESC\nLIMIT 5;\n```",
-    "sql": "SELECT\n  customer_id,\n  total_spending,\n  RANK() OVER (ORDER BY total_spending DESC) AS spending_rank\nFROM (\n  SELECT\n    customer_id,\n    SUM(amount) AS total_spending\n  FROM orders\n  GROUP BY customer_id\n) t\nORDER BY total_spending DESC\nLIMIT 5;",
-    "rows": null,
-    "sql_attempts": 1,
-    "latency_s": 1.2582288749981672,
-    "cost_usd": 0.001255
-  },
-  "q_010_0": {
-    "text": "```sql\nSELECT\n    ar.Name AS artist_name,\n    COUNT(DISTINCT g.GenreId) AS distinct_genre_count\nFROM Artist ar\nJOIN Album al\n    ON ar.ArtistId = al.ArtistId\nJOIN Track t\n    ON al.AlbumId = t.AlbumId\nJOIN Genre g\n    ON t.GenreId = g.GenreId\nGROUP BY ar.ArtistId, ar.Name\nHAVING COUNT(DISTINCT g.GenreId) > 3;\n```",
-    "sql": "SELECT\n    ar.Name AS artist_name,\n    COUNT(DISTINCT g.GenreId) AS distinct_genre_count\nFROM Artist ar\nJOIN Album al\n    ON ar.ArtistId = al.ArtistId\nJOIN Track t\n    ON al.AlbumId = t.AlbumId\nJOIN Genre g\n    ON t.GenreId = g.GenreId\nGROUP BY ar.ArtistId, ar.Name\nHAVING COUNT(DISTINCT g.GenreId) > 3;",
-    "rows": [
-      {
-        "artist_name": "Iron Maiden",
-        "distinct_genre_count": 4
-      }
-    ],
-    "sql_attempts": 1,
-    "latency_s": 1.5525459590135142,
-    "cost_usd": 0.0017225
-  },
-  "q_001_1": {
-    "text": "```sql\nSELECT\n  g.Name AS genre,\n  SUM(il.UnitPrice * il.Quantity) AS total_sales\nFROM InvoiceLine il\nJOIN Track t\n  ON il.TrackId = t.TrackId\nJOIN Genre g\n  ON t.GenreId = g.GenreId\nGROUP BY g.GenreId, g.Name\nORDER BY total_sales DESC\nLIMIT 5;\n```",
-    "sql": "SELECT\n  g.Name AS genre,\n  SUM(il.UnitPrice * il.Quantity) AS total_sales\nFROM InvoiceLine il\nJOIN Track t\n  ON il.TrackId = t.TrackId\nJOIN Genre g\n  ON t.GenreId = g.GenreId\nGROUP BY g.GenreId, g.Name\nORDER BY total_sales DESC\nLIMIT 5;",
-    "rows": [
-      {
-        "genre": "Rock",
-        "total_sales": 826.65
-      },
-      {
-        "genre": "Latin",
-        "total_sales": 382.14
-      },
-      {
-        "genre": "Metal",
-        "total_sales": 261.36
-      },
-      {
-        "genre": "Alternative & Punk",
-        "total_sales": 241.56
-      },
-      {
-        "genre": "TV Shows",
-        "total_sales": 93.53
-      }
-    ],
-    "sql_attempts": 1,
-    "latency_s": 1.2470550839789212,
-    "cost_usd": 0.0013075
-  },
-  "q_002_1": {
-    "text": "```sql\nSELECT a.title\nFROM albums AS a\nJOIN artists AS ar ON a.artist_id = ar.artist_id\nWHERE ar.name = 'AC/DC';\n```",
-    "sql": "SELECT a.title\nFROM albums AS a\nJOIN artists AS ar ON a.artist_id = ar.artist_id\nWHERE ar.name = 'AC/DC';",
-    "rows": null,
-    "sql_attempts": 1,
-    "latency_s": 0.9919696249999106,
-    "cost_usd": 0.00061
-  },
-  "q_003_1": {
-    "text": "```sql\nSELECT Name, Email\nFROM Customers\nWHERE Country = 'Brazil';\n```",
-    "sql": "SELECT Name, Email\nFROM Customers\nWHERE Country = 'Brazil';",
-    "rows": null,
-    "sql_attempts": 1,
-    "latency_s": 0.8164322919910774,
-    "cost_usd": 0.000375
-  },
-  "q_004_1": {
-    "text": "```sql\nSELECT\n  mt.Name AS media_type,\n  COUNT(t.TrackId) AS track_count\nFROM MediaType mt\nJOIN Track t\n  ON t.MediaTypeId = mt.MediaTypeId\nGROUP BY mt.MediaTypeId, mt.Name\nORDER BY track_count DESC\nLIMIT 1;\n```",
-    "sql": "SELECT\n  mt.Name AS media_type,\n  COUNT(t.TrackId) AS track_count\nFROM MediaType mt\nJOIN Track t\n  ON t.MediaTypeId = mt.MediaTypeId\nGROUP BY mt.MediaTypeId, mt.Name\nORDER BY track_count DESC\nLIMIT 1;",
-    "rows": [
-      {
-        "media_type": "MPEG audio file",
-        "track_count": 3034
-      }
-    ],
-    "sql_attempts": 1,
-    "latency_s": 2.869733375031501,
-    "cost_usd": 0.0010675
-  },
-  "q_005_1": {
-    "text": "```sql\nSELECT e.employee_id,\n       e.first_name,\n       e.last_name,\n       COUNT(c.customer_id) AS customer_count\nFROM employees e\nJOIN customers c\n  ON c.support_rep_id = e.employee_id\nGROUP BY e.employee_id, e.first_name, e.last_name\nORDER BY customer_count DESC\nLIMIT 1;\n```",
-    "sql": "SELECT e.employee_id,\n       e.first_name,\n       e.last_name,\n       COUNT(c.customer_id) AS customer_count\nFROM employees e\nJOIN customers c\n  ON c.support_rep_id = e.employee_id\nGROUP BY e.employee_id, e.first_name, e.last_name\nORDER BY customer_count DESC\nLIMIT 1;",
-    "rows": null,
-    "sql_attempts": 1,
-    "latency_s": 0.9181514579686336,
-    "cost_usd": 0.00118
-  },
-  "q_006_1": {
-    "text": "```sql\nSELECT\n  p.PlaylistId,\n  p.Name AS PlaylistName,\n  COUNT(pt.TrackId) AS TrackCount\nFROM Playlist AS p\nLEFT JOIN PlaylistTrack AS pt\n  ON p.PlaylistId = pt.PlaylistId\nGROUP BY\n  p.PlaylistId,\n  p.Name;\n```",
-    "sql": "SELECT\n  p.PlaylistId,\n  p.Name AS PlaylistName,\n  COUNT(pt.TrackId) AS TrackCount\nFROM Playlist AS p\nLEFT JOIN PlaylistTrack AS pt\n  ON p.PlaylistId = pt.PlaylistId\nGROUP BY\n  p.PlaylistId,\n  p.Name;",
-    "rows": [
-      {
-        "PlaylistId": 1,
-        "PlaylistName": "Music",
-        "TrackCount": 3290
-      },
-      {
-        "PlaylistId": 2,
-        "PlaylistName": "Movies",
-        "TrackCount": 0
-      },
-      {
-        "PlaylistId": 3,
-        "PlaylistName": "TV Shows",
-        "TrackCount": 213
-      },
-      {
-        "PlaylistId": 4,
-        "PlaylistName": "Audiobooks",
-        "TrackCount": 0
-      },
-      {
-        "PlaylistId": 5,
-        "PlaylistName": "90\u2019s Music",
-        "TrackCount": 1477
-      },
-      {
-        "PlaylistId": 6,
-        "PlaylistName": "Audiobooks",
-        "TrackCount": 0
-      },
-      {
-        "PlaylistId": 7,
-        "PlaylistName": "Movies",
-        "TrackCount": 0
-      },
-      {
-        "PlaylistId": 8,
-        "PlaylistName": "Music",
-        "TrackCount": 3290
-      },
-      {
-        "PlaylistId": 9,
-        "PlaylistName": "Music Videos",
-        "TrackCount": 1
-      },
-      {
-        "PlaylistId": 10,
-        "PlaylistName": "TV Shows",
-        "TrackCount": 213
-      },
-      {
-        "PlaylistId": 11,
-        "PlaylistName": "Brazilian Music",
-        "TrackCount": 39
-      },
-      {
-        "PlaylistId": 12,
-        "PlaylistName": "Classical",
-        "TrackCount": 75
-      },
-      {
-        "PlaylistId": 13,
-        "PlaylistName": "Classical 101 - Deep Cuts",
-        "TrackCount": 25
-      },
-      {
-        "PlaylistId": 14,
-        "PlaylistName": "Classical 101 - Next Steps",
-        "TrackCount": 25
-      },
-      {
-        "PlaylistId": 15,
-        "PlaylistName": "Classical 101 - The Basics",
-        "TrackCount": 25
-      },
-      {
-        "PlaylistId": 16,
-        "PlaylistName": "Grunge",
-        "TrackCount": 15
-      },
-      {
-        "PlaylistId": 17,
-        "PlaylistName": "Heavy Metal Classic",
-        "TrackCount": 26
-      },
-      {
-        "PlaylistId": 18,
-        "PlaylistName": "On-The-Go 1",
-        "TrackCount": 1
-      }
-    ],
-    "sql_attempts": 1,
-    "latency_s": 1.1246213329723105,
-    "cost_usd": 0.0010875
-  },
-  "q_007_1": {
-    "text": "```sql\nSELECT SUM(revenue) AS total_revenue\nFROM your_table_name\nWHERE EXTRACT(YEAR FROM date_column) = 2021;\n```",
-    "sql": "SELECT SUM(revenue) AS total_revenue\nFROM your_table_name\nWHERE EXTRACT(YEAR FROM date_column) = 2021;",
-    "rows": null,
-    "sql_attempts": 1,
-    "latency_s": 0.7164821249898523,
-    "cost_usd": 0.0006025
-  },
-  "q_008_1": {
-    "text": "```sql\nSELECT\n  BillingCountry,\n  AVG(Total) AS AverageInvoiceTotal\nFROM Invoice\nGROUP BY BillingCountry\nORDER BY AverageInvoiceTotal DESC;\n```",
-    "sql": "SELECT\n  BillingCountry,\n  AVG(Total) AS AverageInvoiceTotal\nFROM Invoice\nGROUP BY BillingCountry\nORDER BY AverageInvoiceTotal DESC;",
-    "rows": [
-      {
-        "BillingCountry": "Chile",
-        "AverageInvoiceTotal": 6.659999999999999
-      },
-      {
-        "BillingCountry": "Ireland",
-        "AverageInvoiceTotal": 6.517142857142857
-      },
-      {
-        "BillingCountry": "Hungary",
-        "AverageInvoiceTotal": 6.517142857142857
-      },
-      {
-        "BillingCountry": "Czech Republic",
-        "AverageInvoiceTotal": 6.445714285714286
-      },
-      {
-        "BillingCountry": "Austria",
-        "AverageInvoiceTotal": 6.088571428571428
-      },
-      {
-        "BillingCountry": "Finland",
-        "AverageInvoiceTotal": 5.945714285714286
-      },
-      {
-        "BillingCountry": "Netherlands",
-        "AverageInvoiceTotal": 5.8028571428571425
-      },
-      {
-        "BillingCountry": "India",
-        "AverageInvoiceTotal": 5.78923076923077
-      },
-      {
-        "BillingCountry": "USA",
-        "AverageInvoiceTotal": 5.747912087912088
-      },
-      {
-        "BillingCountry": "Norway",
-        "AverageInvoiceTotal": 5.659999999999999
-      },
-      {
-        "BillingCountry": "Germany",
-        "AverageInvoiceTotal": 5.588571428571428
-      },
-      {
-        "BillingCountry": "France",
-        "AverageInvoiceTotal": 5.574285714285714
-      },
-      {
-        "BillingCountry": "Sweden",
-        "AverageInvoiceTotal": 5.517142857142857
-      },
-      {
-        "BillingCountry": "Portugal",
-        "AverageInvoiceTotal": 5.517142857142857
-      },
-      {
-        "BillingCountry": "Brazil",
-        "AverageInvoiceTotal": 5.4314285714285715
-      },
-      {
-        "BillingCountry": "Canada",
-        "AverageInvoiceTotal": 5.4278571428571425
-      },
-      {
-        "BillingCountry": "United Kingdom",
-        "AverageInvoiceTotal": 5.3742857142857146
-      },
-      {
-        "BillingCountry": "Spain",
-        "AverageInvoiceTotal": 5.374285714285714
-      },
-      {
-        "BillingCountry": "Poland",
-        "AverageInvoiceTotal": 5.374285714285714
-      },
-      {
-        "BillingCountry": "Italy",
-        "AverageInvoiceTotal": 5.374285714285714
-      },
-      {
-        "BillingCountry": "Denmark",
-        "AverageInvoiceTotal": 5.374285714285714
-      },
-      {
-        "BillingCountry": "Belgium",
-        "AverageInvoiceTotal": 5.374285714285714
-      },
-      {
-        "BillingCountry": "Australia",
-        "AverageInvoiceTotal": 5.374285714285714
-      },
-      {
-        "BillingCountry": "Argentina",
-        "AverageInvoiceTotal": 5.374285714285714
-      }
-    ],
-    "sql_attempts": 1,
-    "latency_s": 0.7135612089768983,
-    "cost_usd": 0.0006425
-  },
-  "q_009_1": {
-    "text": "```sql\nSELECT\n    customer_id,\n    SUM(amount) AS total_spending,\n    RANK() OVER (ORDER BY SUM(amount) DESC) AS spending_rank\nFROM orders\nGROUP BY customer_id\nORDER BY total_spending DESC\nLIMIT 5;\n```\n\nIf your table or column names differ, replace:\n- `orders` with your sales/orders table\n- `customer_id` with the customer identifier\n- `amount` with the purchase/spending value",
-    "sql": "SELECT\n    customer_id,\n    SUM(amount) AS total_spending,\n    RANK() OVER (ORDER BY SUM(amount) DESC) AS spending_rank\nFROM orders\nGROUP BY customer_id\nORDER BY total_spending DESC\nLIMIT 5;",
-    "rows": null,
-    "sql_attempts": 1,
-    "latency_s": 2.026760959008243,
-    "cost_usd": 0.001585
-  },
-  "q_010_1": {
-    "text": "```sql\nSELECT\n    ar.Name AS artist_name,\n    COUNT(DISTINCT g.GenreId) AS distinct_genre_count\nFROM Artist ar\nJOIN Album al\n    ON al.ArtistId = ar.ArtistId\nJOIN Track t\n    ON t.AlbumId = al.AlbumId\nJOIN Genre g\n    ON g.GenreId = t.GenreId\nGROUP BY ar.ArtistId, ar.Name\nHAVING COUNT(DISTINCT g.GenreId) > 3;\n```",
-    "sql": "SELECT\n    ar.Name AS artist_name,\n    COUNT(DISTINCT g.GenreId) AS distinct_genre_count\nFROM Artist ar\nJOIN Album al\n    ON al.ArtistId = ar.ArtistId\nJOIN Track t\n    ON t.AlbumId = al.AlbumId\nJOIN Genre g\n    ON g.GenreId = t.GenreId\nGROUP BY ar.ArtistId, ar.Name\nHAVING COUNT(DISTINCT g.GenreId) > 3;",
-    "rows": [
-      {
-        "artist_name": "Iron Maiden",
-        "distinct_genre_count": 4
-      }
-    ],
-    "sql_attempts": 1,
-    "latency_s": 1.6589537499821745,
-    "cost_usd": 0.0017225
-  },
-  "q_001_2": {
-    "text": "```sql\nSELECT\n  g.Name AS genre,\n  SUM(il.UnitPrice * il.Quantity) AS total_sales\nFROM InvoiceLine il\nJOIN Track t\n  ON il.TrackId = t.TrackId\nJOIN Genre g\n  ON t.GenreId = g.GenreId\nGROUP BY g.GenreId, g.Name\nORDER BY total_sales DESC\nLIMIT 5;\n```",
-    "sql": "SELECT\n  g.Name AS genre,\n  SUM(il.UnitPrice * il.Quantity) AS total_sales\nFROM InvoiceLine il\nJOIN Track t\n  ON il.TrackId = t.TrackId\nJOIN Genre g\n  ON t.GenreId = g.GenreId\nGROUP BY g.GenreId, g.Name\nORDER BY total_sales DESC\nLIMIT 5;",
-    "rows": [
-      {
-        "genre": "Rock",
-        "total_sales": 826.65
-      },
-      {
-        "genre": "Latin",
-        "total_sales": 382.14
-      },
-      {
-        "genre": "Metal",
-        "total_sales": 261.36
-      },
-      {
-        "genre": "Alternative & Punk",
-        "total_sales": 241.56
-      },
-      {
-        "genre": "TV Shows",
-        "total_sales": 93.53
-      }
-    ],
-    "sql_attempts": 1,
-    "latency_s": 1.2841342500178143,
-    "cost_usd": 0.0013075
-  },
-  "q_002_2": {
-    "text": "```sql\nSELECT a.*\nFROM albums AS a\nJOIN artists AS ar\n  ON a.artist_id = ar.artist_id\nWHERE ar.name = 'AC/DC';\n```",
-    "sql": "SELECT a.*\nFROM albums AS a\nJOIN artists AS ar\n  ON a.artist_id = ar.artist_id\nWHERE ar.name = 'AC/DC';",
-    "rows": null,
-    "sql_attempts": 1,
-    "latency_s": 1.0326643750304356,
-    "cost_usd": 0.000625
-  },
-  "q_003_2": {
-    "text": "```sql\nSELECT name, email\nFROM customers\nWHERE country = 'Brazil';\n```",
-    "sql": "SELECT name, email\nFROM customers\nWHERE country = 'Brazil';",
-    "rows": null,
-    "sql_attempts": 1,
-    "latency_s": 0.6362096250522882,
-    "cost_usd": 0.000375
-  },
-  "q_004_2": {
     "text": "```sql\nSELECT\n  mt.Name AS media_type,\n  COUNT(t.TrackId) AS track_count\nFROM Track t\nJOIN MediaType mt\n  ON t.MediaTypeId = mt.MediaTypeId\nGROUP BY mt.MediaTypeId, mt.Name\nORDER BY track_count DESC\nLIMIT 1;\n```",
+    "latency_s": 1.2649671250255778,
+    "cost_usd": 0.0010675,
     "sql": "SELECT\n  mt.Name AS media_type,\n  COUNT(t.TrackId) AS track_count\nFROM Track t\nJOIN MediaType mt\n  ON t.MediaTypeId = mt.MediaTypeId\nGROUP BY mt.MediaTypeId, mt.Name\nORDER BY track_count DESC\nLIMIT 1;",
     "rows": [
       {
         "media_type": "MPEG audio file",
         "track_count": 3034
       }
-    ],
-    "sql_attempts": 1,
-    "latency_s": 1.1513369999593124,
-    "cost_usd": 0.0010675
+    ]
   },
-  "q_005_2": {
-    "text": "```sql\nSELECT e.employeeNumber,\n       e.firstName,\n       e.lastName,\n       COUNT(c.customerNumber) AS customer_count\nFROM employees e\nJOIN customers c\n  ON e.employeeNumber = c.salesRepEmployeeNumber\nGROUP BY e.employeeNumber, e.firstName, e.lastName\nORDER BY customer_count DESC\nLIMIT 1;\n```",
-    "sql": "SELECT e.employeeNumber,\n       e.firstName,\n       e.lastName,\n       COUNT(c.customerNumber) AS customer_count\nFROM employees e\nJOIN customers c\n  ON e.employeeNumber = c.salesRepEmployeeNumber\nGROUP BY e.employeeNumber, e.firstName, e.lastName\nORDER BY customer_count DESC\nLIMIT 1;",
-    "rows": null,
-    "sql_attempts": 1,
-    "latency_s": 1.169569291989319,
-    "cost_usd": 0.001195
+  "q_005_0": {
+    "text": "```sql\nSELECT e.employee_id,\n       e.first_name,\n       e.last_name,\n       COUNT(c.customer_id) AS customer_count\nFROM employees e\nJOIN customers c\n  ON c.support_rep_id = e.employee_id\nGROUP BY e.employee_id, e.first_name, e.last_name\nORDER BY customer_count DESC\nLIMIT 1;\n```",
+    "latency_s": 1.210625874926336,
+    "cost_usd": 0.00118,
+    "sql": "SELECT e.employee_id,\n       e.first_name,\n       e.last_name,\n       COUNT(c.customer_id) AS customer_count\nFROM employees e\nJOIN customers c\n  ON c.support_rep_id = e.employee_id\nGROUP BY e.employee_id, e.first_name, e.last_name\nORDER BY customer_count DESC\nLIMIT 1;",
+    "rows": null
   },
-  "q_006_2": {
+  "q_006_0": {
     "text": "```sql\nSELECT\n  p.PlaylistId,\n  p.Name AS PlaylistName,\n  COUNT(pt.TrackId) AS TrackCount\nFROM Playlist AS p\nLEFT JOIN PlaylistTrack AS pt\n  ON p.PlaylistId = pt.PlaylistId\nGROUP BY\n  p.PlaylistId,\n  p.Name;\n```",
+    "latency_s": 1.1749442080035806,
+    "cost_usd": 0.0010875,
     "sql": "SELECT\n  p.PlaylistId,\n  p.Name AS PlaylistName,\n  COUNT(pt.TrackId) AS TrackCount\nFROM Playlist AS p\nLEFT JOIN PlaylistTrack AS pt\n  ON p.PlaylistId = pt.PlaylistId\nGROUP BY\n  p.PlaylistId,\n  p.Name;",
     "rows": [
       {
@@ -757,21 +156,19 @@
         "PlaylistName": "On-The-Go 1",
         "TrackCount": 1
       }
-    ],
-    "sql_attempts": 1,
-    "latency_s": 1.0584295830340125,
-    "cost_usd": 0.0010875
+    ]
   },
-  "q_007_2": {
-    "text": "```sql\nSELECT SUM(revenue) AS total_revenue\nFROM your_table_name\nWHERE EXTRACT(YEAR FROM date_column) = 2021;\n```",
+  "q_007_0": {
+    "text": "```sql\nSELECT SUM(revenue) AS total_revenue\nFROM your_table_name\nWHERE EXTRACT(YEAR FROM date_column) = 2021;\n```\n\nIf you share your actual table and column names, I can tailor it exactly.",
+    "latency_s": 1.5434319999767467,
+    "cost_usd": 0.0008575,
     "sql": "SELECT SUM(revenue) AS total_revenue\nFROM your_table_name\nWHERE EXTRACT(YEAR FROM date_column) = 2021;",
-    "rows": null,
-    "sql_attempts": 1,
-    "latency_s": 1.017537750012707,
-    "cost_usd": 0.0006025
+    "rows": null
   },
-  "q_008_2": {
+  "q_008_0": {
     "text": "```sql\nSELECT\n  BillingCountry,\n  AVG(Total) AS AverageInvoiceTotal\nFROM Invoice\nGROUP BY BillingCountry\nORDER BY AverageInvoiceTotal DESC;\n```",
+    "latency_s": 0.8826241249917075,
+    "cost_usd": 0.0006425,
     "sql": "SELECT\n  BillingCountry,\n  AVG(Total) AS AverageInvoiceTotal\nFROM Invoice\nGROUP BY BillingCountry\nORDER BY AverageInvoiceTotal DESC;",
     "rows": [
       {
@@ -870,25 +267,593 @@
         "BillingCountry": "Argentina",
         "AverageInvoiceTotal": 5.374285714285714
       }
-    ],
-    "sql_attempts": 1,
-    "latency_s": 1.1255898329545744,
-    "cost_usd": 0.0006425
+    ]
+  },
+  "q_009_0": {
+    "text": "```sql\nWITH customer_spending AS (\n    SELECT\n        customer_id,\n        SUM(amount) AS total_spending\n    FROM orders\n    GROUP BY customer_id\n),\nranked_customers AS (\n    SELECT\n        customer_id,\n        total_spending,\n        RANK() OVER (ORDER BY total_spending DESC) AS spending_rank\n    FROM customer_spending\n)\nSELECT\n    customer_id,\n    total_spending,\n    spending_rank\nFROM ranked_customers\nORDER BY total_spending DESC\nLIMIT 5;\n```\n\nIf your spending column or table names differ, replace `orders`, `amount`, and `customer_id` accordingly.",
+    "latency_s": 1.7681877920404077,
+    "cost_usd": 0.002155,
+    "sql": "WITH customer_spending AS (\n    SELECT\n        customer_id,\n        SUM(amount) AS total_spending\n    FROM orders\n    GROUP BY customer_id\n),\nranked_customers AS (\n    SELECT\n        customer_id,\n        total_spending,\n        RANK() OVER (ORDER BY total_spending DESC) AS spending_rank\n    FROM customer_spending\n)\nSELECT\n    customer_id,\n    total_spending,\n    spending_rank\nFROM ranked_customers\nORDER BY total_spending DESC\nLIMIT 5;",
+    "rows": null
+  },
+  "q_010_0": {
+    "text": "```sql\nSELECT\n  ar.Name AS artist_name,\n  COUNT(DISTINCT g.GenreId) AS genre_count\nFROM Artist ar\nJOIN Album al\n  ON al.ArtistId = ar.ArtistId\nJOIN Track t\n  ON t.AlbumId = al.AlbumId\nJOIN Genre g\n  ON g.GenreId = t.GenreId\nGROUP BY ar.ArtistId, ar.Name\nHAVING COUNT(DISTINCT g.GenreId) > 3;\n```",
+    "latency_s": 1.3736950000748038,
+    "cost_usd": 0.0016925,
+    "sql": "SELECT\n  ar.Name AS artist_name,\n  COUNT(DISTINCT g.GenreId) AS genre_count\nFROM Artist ar\nJOIN Album al\n  ON al.ArtistId = ar.ArtistId\nJOIN Track t\n  ON t.AlbumId = al.AlbumId\nJOIN Genre g\n  ON g.GenreId = t.GenreId\nGROUP BY ar.ArtistId, ar.Name\nHAVING COUNT(DISTINCT g.GenreId) > 3;",
+    "rows": [
+      {
+        "artist_name": "Iron Maiden",
+        "genre_count": 4
+      }
+    ]
+  },
+  "q_001_1": {
+    "text": "```sql\nSELECT\n  g.Name AS genre,\n  SUM(il.UnitPrice * il.Quantity) AS total_sales\nFROM InvoiceLine il\nJOIN Track t\n  ON il.TrackId = t.TrackId\nJOIN Genre g\n  ON t.GenreId = g.GenreId\nGROUP BY g.GenreId, g.Name\nORDER BY total_sales DESC\nLIMIT 5;\n```",
+    "latency_s": 1.5717651250306517,
+    "cost_usd": 0.0013075,
+    "sql": "SELECT\n  g.Name AS genre,\n  SUM(il.UnitPrice * il.Quantity) AS total_sales\nFROM InvoiceLine il\nJOIN Track t\n  ON il.TrackId = t.TrackId\nJOIN Genre g\n  ON t.GenreId = g.GenreId\nGROUP BY g.GenreId, g.Name\nORDER BY total_sales DESC\nLIMIT 5;",
+    "rows": [
+      {
+        "genre": "Rock",
+        "total_sales": 826.65
+      },
+      {
+        "genre": "Latin",
+        "total_sales": 382.14
+      },
+      {
+        "genre": "Metal",
+        "total_sales": 261.36
+      },
+      {
+        "genre": "Alternative & Punk",
+        "total_sales": 241.56
+      },
+      {
+        "genre": "TV Shows",
+        "total_sales": 93.53
+      }
+    ]
+  },
+  "q_002_1": {
+    "text": "```sql\nSELECT title\nFROM albums\nJOIN artists ON albums.artist_id = artists.artist_id\nWHERE artists.name = 'AC/DC';\n```",
+    "latency_s": 0.9080420419340953,
+    "cost_usd": 0.000535,
+    "sql": "SELECT title\nFROM albums\nJOIN artists ON albums.artist_id = artists.artist_id\nWHERE artists.name = 'AC/DC';",
+    "rows": null
+  },
+  "q_003_1": {
+    "text": "```sql\nSELECT name, email\nFROM customers\nWHERE country = 'Brazil';\n```",
+    "latency_s": 1.1796833749394864,
+    "cost_usd": 0.000375,
+    "sql": "SELECT name, email\nFROM customers\nWHERE country = 'Brazil';",
+    "rows": null
+  },
+  "q_004_1": {
+    "text": "```sql\nSELECT\n  mt.Name AS media_type,\n  COUNT(t.TrackId) AS track_count\nFROM Track t\nJOIN MediaType mt\n  ON t.MediaTypeId = mt.MediaTypeId\nGROUP BY mt.MediaTypeId, mt.Name\nORDER BY track_count DESC\nLIMIT 1;\n```",
+    "latency_s": 1.8948278330499306,
+    "cost_usd": 0.0010675,
+    "sql": "SELECT\n  mt.Name AS media_type,\n  COUNT(t.TrackId) AS track_count\nFROM Track t\nJOIN MediaType mt\n  ON t.MediaTypeId = mt.MediaTypeId\nGROUP BY mt.MediaTypeId, mt.Name\nORDER BY track_count DESC\nLIMIT 1;",
+    "rows": [
+      {
+        "media_type": "MPEG audio file",
+        "track_count": 3034
+      }
+    ]
+  },
+  "q_005_1": {
+    "text": "```sql\nSELECT e.employee_id,\n       e.first_name,\n       e.last_name,\n       COUNT(c.customer_id) AS customer_count\nFROM employees e\nJOIN customers c\n  ON c.support_rep_id = e.employee_id\nGROUP BY e.employee_id, e.first_name, e.last_name\nORDER BY customer_count DESC\nLIMIT 1;\n```",
+    "latency_s": 1.4210857910802588,
+    "cost_usd": 0.00118,
+    "sql": "SELECT e.employee_id,\n       e.first_name,\n       e.last_name,\n       COUNT(c.customer_id) AS customer_count\nFROM employees e\nJOIN customers c\n  ON c.support_rep_id = e.employee_id\nGROUP BY e.employee_id, e.first_name, e.last_name\nORDER BY customer_count DESC\nLIMIT 1;",
+    "rows": null
+  },
+  "q_006_1": {
+    "text": "```sql\nSELECT\n  p.PlaylistId,\n  p.Name AS PlaylistName,\n  COUNT(pt.TrackId) AS TrackCount\nFROM Playlist AS p\nLEFT JOIN PlaylistTrack AS pt\n  ON p.PlaylistId = pt.PlaylistId\nGROUP BY\n  p.PlaylistId,\n  p.Name;\n```",
+    "latency_s": 1.1994095840491354,
+    "cost_usd": 0.0010875,
+    "sql": "SELECT\n  p.PlaylistId,\n  p.Name AS PlaylistName,\n  COUNT(pt.TrackId) AS TrackCount\nFROM Playlist AS p\nLEFT JOIN PlaylistTrack AS pt\n  ON p.PlaylistId = pt.PlaylistId\nGROUP BY\n  p.PlaylistId,\n  p.Name;",
+    "rows": [
+      {
+        "PlaylistId": 1,
+        "PlaylistName": "Music",
+        "TrackCount": 3290
+      },
+      {
+        "PlaylistId": 2,
+        "PlaylistName": "Movies",
+        "TrackCount": 0
+      },
+      {
+        "PlaylistId": 3,
+        "PlaylistName": "TV Shows",
+        "TrackCount": 213
+      },
+      {
+        "PlaylistId": 4,
+        "PlaylistName": "Audiobooks",
+        "TrackCount": 0
+      },
+      {
+        "PlaylistId": 5,
+        "PlaylistName": "90\u2019s Music",
+        "TrackCount": 1477
+      },
+      {
+        "PlaylistId": 6,
+        "PlaylistName": "Audiobooks",
+        "TrackCount": 0
+      },
+      {
+        "PlaylistId": 7,
+        "PlaylistName": "Movies",
+        "TrackCount": 0
+      },
+      {
+        "PlaylistId": 8,
+        "PlaylistName": "Music",
+        "TrackCount": 3290
+      },
+      {
+        "PlaylistId": 9,
+        "PlaylistName": "Music Videos",
+        "TrackCount": 1
+      },
+      {
+        "PlaylistId": 10,
+        "PlaylistName": "TV Shows",
+        "TrackCount": 213
+      },
+      {
+        "PlaylistId": 11,
+        "PlaylistName": "Brazilian Music",
+        "TrackCount": 39
+      },
+      {
+        "PlaylistId": 12,
+        "PlaylistName": "Classical",
+        "TrackCount": 75
+      },
+      {
+        "PlaylistId": 13,
+        "PlaylistName": "Classical 101 - Deep Cuts",
+        "TrackCount": 25
+      },
+      {
+        "PlaylistId": 14,
+        "PlaylistName": "Classical 101 - Next Steps",
+        "TrackCount": 25
+      },
+      {
+        "PlaylistId": 15,
+        "PlaylistName": "Classical 101 - The Basics",
+        "TrackCount": 25
+      },
+      {
+        "PlaylistId": 16,
+        "PlaylistName": "Grunge",
+        "TrackCount": 15
+      },
+      {
+        "PlaylistId": 17,
+        "PlaylistName": "Heavy Metal Classic",
+        "TrackCount": 26
+      },
+      {
+        "PlaylistId": 18,
+        "PlaylistName": "On-The-Go 1",
+        "TrackCount": 1
+      }
+    ]
+  },
+  "q_007_1": {
+    "text": "```sql\nSELECT SUM(revenue) AS total_revenue\nFROM your_table_name\nWHERE EXTRACT(YEAR FROM date_column) = 2021;\n```",
+    "latency_s": 0.9729385420214385,
+    "cost_usd": 0.0006025,
+    "sql": "SELECT SUM(revenue) AS total_revenue\nFROM your_table_name\nWHERE EXTRACT(YEAR FROM date_column) = 2021;",
+    "rows": null
+  },
+  "q_008_1": {
+    "text": "```sql\nSELECT\n  BillingCountry,\n  AVG(Total) AS AverageInvoiceTotal\nFROM Invoice\nGROUP BY BillingCountry\nORDER BY AverageInvoiceTotal DESC;\n```",
+    "latency_s": 1.0275184999918565,
+    "cost_usd": 0.0006425,
+    "sql": "SELECT\n  BillingCountry,\n  AVG(Total) AS AverageInvoiceTotal\nFROM Invoice\nGROUP BY BillingCountry\nORDER BY AverageInvoiceTotal DESC;",
+    "rows": [
+      {
+        "BillingCountry": "Chile",
+        "AverageInvoiceTotal": 6.659999999999999
+      },
+      {
+        "BillingCountry": "Ireland",
+        "AverageInvoiceTotal": 6.517142857142857
+      },
+      {
+        "BillingCountry": "Hungary",
+        "AverageInvoiceTotal": 6.517142857142857
+      },
+      {
+        "BillingCountry": "Czech Republic",
+        "AverageInvoiceTotal": 6.445714285714286
+      },
+      {
+        "BillingCountry": "Austria",
+        "AverageInvoiceTotal": 6.088571428571428
+      },
+      {
+        "BillingCountry": "Finland",
+        "AverageInvoiceTotal": 5.945714285714286
+      },
+      {
+        "BillingCountry": "Netherlands",
+        "AverageInvoiceTotal": 5.8028571428571425
+      },
+      {
+        "BillingCountry": "India",
+        "AverageInvoiceTotal": 5.78923076923077
+      },
+      {
+        "BillingCountry": "USA",
+        "AverageInvoiceTotal": 5.747912087912088
+      },
+      {
+        "BillingCountry": "Norway",
+        "AverageInvoiceTotal": 5.659999999999999
+      },
+      {
+        "BillingCountry": "Germany",
+        "AverageInvoiceTotal": 5.588571428571428
+      },
+      {
+        "BillingCountry": "France",
+        "AverageInvoiceTotal": 5.574285714285714
+      },
+      {
+        "BillingCountry": "Sweden",
+        "AverageInvoiceTotal": 5.517142857142857
+      },
+      {
+        "BillingCountry": "Portugal",
+        "AverageInvoiceTotal": 5.517142857142857
+      },
+      {
+        "BillingCountry": "Brazil",
+        "AverageInvoiceTotal": 5.4314285714285715
+      },
+      {
+        "BillingCountry": "Canada",
+        "AverageInvoiceTotal": 5.4278571428571425
+      },
+      {
+        "BillingCountry": "United Kingdom",
+        "AverageInvoiceTotal": 5.3742857142857146
+      },
+      {
+        "BillingCountry": "Spain",
+        "AverageInvoiceTotal": 5.374285714285714
+      },
+      {
+        "BillingCountry": "Poland",
+        "AverageInvoiceTotal": 5.374285714285714
+      },
+      {
+        "BillingCountry": "Italy",
+        "AverageInvoiceTotal": 5.374285714285714
+      },
+      {
+        "BillingCountry": "Denmark",
+        "AverageInvoiceTotal": 5.374285714285714
+      },
+      {
+        "BillingCountry": "Belgium",
+        "AverageInvoiceTotal": 5.374285714285714
+      },
+      {
+        "BillingCountry": "Australia",
+        "AverageInvoiceTotal": 5.374285714285714
+      },
+      {
+        "BillingCountry": "Argentina",
+        "AverageInvoiceTotal": 5.374285714285714
+      }
+    ]
+  },
+  "q_009_1": {
+    "text": "```sql\nSELECT\n  customer_id,\n  total_spending,\n  RANK() OVER (ORDER BY total_spending DESC) AS spending_rank\nFROM (\n  SELECT\n    customer_id,\n    SUM(amount) AS total_spending\n  FROM orders\n  GROUP BY customer_id\n) t\nORDER BY total_spending DESC\nLIMIT 5;\n```",
+    "latency_s": 1.364568458055146,
+    "cost_usd": 0.001255,
+    "sql": "SELECT\n  customer_id,\n  total_spending,\n  RANK() OVER (ORDER BY total_spending DESC) AS spending_rank\nFROM (\n  SELECT\n    customer_id,\n    SUM(amount) AS total_spending\n  FROM orders\n  GROUP BY customer_id\n) t\nORDER BY total_spending DESC\nLIMIT 5;",
+    "rows": null
+  },
+  "q_010_1": {
+    "text": "```sql\nSELECT\n  ar.Name AS artist_name,\n  COUNT(DISTINCT g.GenreId) AS distinct_genre_count\nFROM Artist ar\nJOIN Album al\n  ON ar.ArtistId = al.ArtistId\nJOIN Track t\n  ON al.AlbumId = t.AlbumId\nJOIN Genre g\n  ON t.GenreId = g.GenreId\nGROUP BY ar.ArtistId, ar.Name\nHAVING COUNT(DISTINCT g.GenreId) > 3;\n```",
+    "latency_s": 1.8297426670324057,
+    "cost_usd": 0.0017225,
+    "sql": "SELECT\n  ar.Name AS artist_name,\n  COUNT(DISTINCT g.GenreId) AS distinct_genre_count\nFROM Artist ar\nJOIN Album al\n  ON ar.ArtistId = al.ArtistId\nJOIN Track t\n  ON al.AlbumId = t.AlbumId\nJOIN Genre g\n  ON t.GenreId = g.GenreId\nGROUP BY ar.ArtistId, ar.Name\nHAVING COUNT(DISTINCT g.GenreId) > 3;",
+    "rows": [
+      {
+        "artist_name": "Iron Maiden",
+        "distinct_genre_count": 4
+      }
+    ]
+  },
+  "q_001_2": {
+    "text": "```sql\nSELECT\n  g.Name AS genre,\n  SUM(ii.UnitPrice * ii.Quantity) AS total_sales\nFROM InvoiceLine ii\nJOIN Track t\n  ON ii.TrackId = t.TrackId\nJOIN Genre g\n  ON t.GenreId = g.GenreId\nGROUP BY g.GenreId, g.Name\nORDER BY total_sales DESC\nLIMIT 5;\n```",
+    "latency_s": 2.330565334064886,
+    "cost_usd": 0.0013075,
+    "sql": "SELECT\n  g.Name AS genre,\n  SUM(ii.UnitPrice * ii.Quantity) AS total_sales\nFROM InvoiceLine ii\nJOIN Track t\n  ON ii.TrackId = t.TrackId\nJOIN Genre g\n  ON t.GenreId = g.GenreId\nGROUP BY g.GenreId, g.Name\nORDER BY total_sales DESC\nLIMIT 5;",
+    "rows": [
+      {
+        "genre": "Rock",
+        "total_sales": 826.65
+      },
+      {
+        "genre": "Latin",
+        "total_sales": 382.14
+      },
+      {
+        "genre": "Metal",
+        "total_sales": 261.36
+      },
+      {
+        "genre": "Alternative & Punk",
+        "total_sales": 241.56
+      },
+      {
+        "genre": "TV Shows",
+        "total_sales": 93.53
+      }
+    ]
+  },
+  "q_002_2": {
+    "text": "```sql\nSELECT *\nFROM albums\nWHERE artist = 'AC/DC';\n```",
+    "latency_s": 1.145004166988656,
+    "cost_usd": 0.00034,
+    "sql": "SELECT *\nFROM albums\nWHERE artist = 'AC/DC';",
+    "rows": null
+  },
+  "q_003_2": {
+    "text": "```sql\nSELECT name, email\nFROM customers\nWHERE country = 'Brazil';\n```",
+    "latency_s": 0.7313224169192836,
+    "cost_usd": 0.000375,
+    "sql": "SELECT name, email\nFROM customers\nWHERE country = 'Brazil';",
+    "rows": null
+  },
+  "q_004_2": {
+    "text": "```sql\nSELECT\n  mt.Name AS media_type,\n  COUNT(t.TrackId) AS track_count\nFROM tracks t\nJOIN media_types mt\n  ON t.MediaTypeId = mt.MediaTypeId\nGROUP BY mt.MediaTypeId, mt.Name\nORDER BY track_count DESC\nLIMIT 1;\n```",
+    "latency_s": 1.267813750077039,
+    "cost_usd": 0.0010675,
+    "sql": "SELECT\n  mt.Name AS media_type,\n  COUNT(t.TrackId) AS track_count\nFROM tracks t\nJOIN media_types mt\n  ON t.MediaTypeId = mt.MediaTypeId\nGROUP BY mt.MediaTypeId, mt.Name\nORDER BY track_count DESC\nLIMIT 1;",
+    "rows": null
+  },
+  "q_005_2": {
+    "text": "```sql\nSELECT e.employee_id,\n       e.first_name,\n       e.last_name,\n       COUNT(c.customer_id) AS customer_count\nFROM employees e\nJOIN customers c\n  ON c.support_rep_id = e.employee_id\nGROUP BY e.employee_id, e.first_name, e.last_name\nORDER BY customer_count DESC\nLIMIT 1;\n```",
+    "latency_s": 1.059362499974668,
+    "cost_usd": 0.00118,
+    "sql": "SELECT e.employee_id,\n       e.first_name,\n       e.last_name,\n       COUNT(c.customer_id) AS customer_count\nFROM employees e\nJOIN customers c\n  ON c.support_rep_id = e.employee_id\nGROUP BY e.employee_id, e.first_name, e.last_name\nORDER BY customer_count DESC\nLIMIT 1;",
+    "rows": null
+  },
+  "q_006_2": {
+    "text": "```sql\nSELECT\n  p.PlaylistId,\n  p.Name AS PlaylistName,\n  COUNT(pt.TrackId) AS TrackCount\nFROM Playlist AS p\nLEFT JOIN PlaylistTrack AS pt\n  ON p.PlaylistId = pt.PlaylistId\nGROUP BY\n  p.PlaylistId,\n  p.Name;\n```",
+    "latency_s": 1.2346713329898193,
+    "cost_usd": 0.0010875,
+    "sql": "SELECT\n  p.PlaylistId,\n  p.Name AS PlaylistName,\n  COUNT(pt.TrackId) AS TrackCount\nFROM Playlist AS p\nLEFT JOIN PlaylistTrack AS pt\n  ON p.PlaylistId = pt.PlaylistId\nGROUP BY\n  p.PlaylistId,\n  p.Name;",
+    "rows": [
+      {
+        "PlaylistId": 1,
+        "PlaylistName": "Music",
+        "TrackCount": 3290
+      },
+      {
+        "PlaylistId": 2,
+        "PlaylistName": "Movies",
+        "TrackCount": 0
+      },
+      {
+        "PlaylistId": 3,
+        "PlaylistName": "TV Shows",
+        "TrackCount": 213
+      },
+      {
+        "PlaylistId": 4,
+        "PlaylistName": "Audiobooks",
+        "TrackCount": 0
+      },
+      {
+        "PlaylistId": 5,
+        "PlaylistName": "90\u2019s Music",
+        "TrackCount": 1477
+      },
+      {
+        "PlaylistId": 6,
+        "PlaylistName": "Audiobooks",
+        "TrackCount": 0
+      },
+      {
+        "PlaylistId": 7,
+        "PlaylistName": "Movies",
+        "TrackCount": 0
+      },
+      {
+        "PlaylistId": 8,
+        "PlaylistName": "Music",
+        "TrackCount": 3290
+      },
+      {
+        "PlaylistId": 9,
+        "PlaylistName": "Music Videos",
+        "TrackCount": 1
+      },
+      {
+        "PlaylistId": 10,
+        "PlaylistName": "TV Shows",
+        "TrackCount": 213
+      },
+      {
+        "PlaylistId": 11,
+        "PlaylistName": "Brazilian Music",
+        "TrackCount": 39
+      },
+      {
+        "PlaylistId": 12,
+        "PlaylistName": "Classical",
+        "TrackCount": 75
+      },
+      {
+        "PlaylistId": 13,
+        "PlaylistName": "Classical 101 - Deep Cuts",
+        "TrackCount": 25
+      },
+      {
+        "PlaylistId": 14,
+        "PlaylistName": "Classical 101 - Next Steps",
+        "TrackCount": 25
+      },
+      {
+        "PlaylistId": 15,
+        "PlaylistName": "Classical 101 - The Basics",
+        "TrackCount": 25
+      },
+      {
+        "PlaylistId": 16,
+        "PlaylistName": "Grunge",
+        "TrackCount": 15
+      },
+      {
+        "PlaylistId": 17,
+        "PlaylistName": "Heavy Metal Classic",
+        "TrackCount": 26
+      },
+      {
+        "PlaylistId": 18,
+        "PlaylistName": "On-The-Go 1",
+        "TrackCount": 1
+      }
+    ]
+  },
+  "q_007_2": {
+    "text": "```sql\nSELECT SUM(revenue) AS total_revenue\nFROM your_table_name\nWHERE EXTRACT(YEAR FROM date_column) = 2021;\n``` \n\nReplace:\n- `your_table_name` with the actual table name\n- `revenue` with the revenue column\n- `date_column` with the date field used to identify the year",
+    "latency_s": 1.380606333957985,
+    "cost_usd": 0.0011875,
+    "sql": "SELECT SUM(revenue) AS total_revenue\nFROM your_table_name\nWHERE EXTRACT(YEAR FROM date_column) = 2021;",
+    "rows": null
+  },
+  "q_008_2": {
+    "text": "```sql\nSELECT\n  BillingCountry,\n  AVG(Total) AS AverageInvoiceTotal\nFROM Invoice\nGROUP BY BillingCountry\nORDER BY AverageInvoiceTotal DESC;\n```",
+    "latency_s": 0.931039834045805,
+    "cost_usd": 0.0006425,
+    "sql": "SELECT\n  BillingCountry,\n  AVG(Total) AS AverageInvoiceTotal\nFROM Invoice\nGROUP BY BillingCountry\nORDER BY AverageInvoiceTotal DESC;",
+    "rows": [
+      {
+        "BillingCountry": "Chile",
+        "AverageInvoiceTotal": 6.659999999999999
+      },
+      {
+        "BillingCountry": "Ireland",
+        "AverageInvoiceTotal": 6.517142857142857
+      },
+      {
+        "BillingCountry": "Hungary",
+        "AverageInvoiceTotal": 6.517142857142857
+      },
+      {
+        "BillingCountry": "Czech Republic",
+        "AverageInvoiceTotal": 6.445714285714286
+      },
+      {
+        "BillingCountry": "Austria",
+        "AverageInvoiceTotal": 6.088571428571428
+      },
+      {
+        "BillingCountry": "Finland",
+        "AverageInvoiceTotal": 5.945714285714286
+      },
+      {
+        "BillingCountry": "Netherlands",
+        "AverageInvoiceTotal": 5.8028571428571425
+      },
+      {
+        "BillingCountry": "India",
+        "AverageInvoiceTotal": 5.78923076923077
+      },
+      {
+        "BillingCountry": "USA",
+        "AverageInvoiceTotal": 5.747912087912088
+      },
+      {
+        "BillingCountry": "Norway",
+        "AverageInvoiceTotal": 5.659999999999999
+      },
+      {
+        "BillingCountry": "Germany",
+        "AverageInvoiceTotal": 5.588571428571428
+      },
+      {
+        "BillingCountry": "France",
+        "AverageInvoiceTotal": 5.574285714285714
+      },
+      {
+        "BillingCountry": "Sweden",
+        "AverageInvoiceTotal": 5.517142857142857
+      },
+      {
+        "BillingCountry": "Portugal",
+        "AverageInvoiceTotal": 5.517142857142857
+      },
+      {
+        "BillingCountry": "Brazil",
+        "AverageInvoiceTotal": 5.4314285714285715
+      },
+      {
+        "BillingCountry": "Canada",
+        "AverageInvoiceTotal": 5.4278571428571425
+      },
+      {
+        "BillingCountry": "United Kingdom",
+        "AverageInvoiceTotal": 5.3742857142857146
+      },
+      {
+        "BillingCountry": "Spain",
+        "AverageInvoiceTotal": 5.374285714285714
+      },
+      {
+        "BillingCountry": "Poland",
+        "AverageInvoiceTotal": 5.374285714285714
+      },
+      {
+        "BillingCountry": "Italy",
+        "AverageInvoiceTotal": 5.374285714285714
+      },
+      {
+        "BillingCountry": "Denmark",
+        "AverageInvoiceTotal": 5.374285714285714
+      },
+      {
+        "BillingCountry": "Belgium",
+        "AverageInvoiceTotal": 5.374285714285714
+      },
+      {
+        "BillingCountry": "Australia",
+        "AverageInvoiceTotal": 5.374285714285714
+      },
+      {
+        "BillingCountry": "Argentina",
+        "AverageInvoiceTotal": 5.374285714285714
+      }
+    ]
   },
   "q_009_2": {
-    "text": "```sql\nWITH customer_spending AS (\n    SELECT\n        customer_id,\n        SUM(amount) AS total_spending\n    FROM orders\n    GROUP BY customer_id\n),\nranked_customers AS (\n    SELECT\n        customer_id,\n        total_spending,\n        RANK() OVER (ORDER BY total_spending DESC) AS spending_rank\n    FROM customer_spending\n)\nSELECT\n    customer_id,\n    total_spending,\n    spending_rank\nFROM ranked_customers\nWHERE spending_rank <= 5\nORDER BY spending_rank, customer_id;\n```\n\nIf your spending column or table names differ, replace:\n- `orders` with your table name\n- `amount` with the spending/purchase column name",
-    "sql": "WITH customer_spending AS (\n    SELECT\n        customer_id,\n        SUM(amount) AS total_spending\n    FROM orders\n    GROUP BY customer_id\n),\nranked_customers AS (\n    SELECT\n        customer_id,\n        total_spending,\n        RANK() OVER (ORDER BY total_spending DESC) AS spending_rank\n    FROM customer_spending\n)\nSELECT\n    customer_id,\n    total_spending,\n    spending_rank\nFROM ranked_customers\nWHERE spending_rank <= 5\nORDER BY spending_rank, customer_id;",
-    "rows": null,
-    "sql_attempts": 1,
-    "latency_s": 1.9412160420324653,
-    "cost_usd": 0.002335
+    "text": "Assuming a typical schema like:\n\n- `customers(customer_id, customer_name, ...)`\n- `orders(order_id, customer_id, ...)`\n- `order_items(order_id, quantity, unit_price, ...)`\n\nYou can write it like this:\n\n```sql\nWITH customer_spending AS (\n    SELECT\n        c.customer_id,\n        c.customer_name,\n        SUM(oi.quantity * oi.unit_price) AS total_spending\n    FROM customers c\n    JOIN orders o\n        ON c.customer_id = o.customer_id\n    JOIN order_items oi\n        ON o.order_id = oi.order_id\n    GROUP BY c.customer_id, c.customer_name\n),\nranked_customers AS (\n    SELECT\n        customer_id,\n        customer_name,\n        total_spending,\n        RANK() OVER (ORDER BY total_spending DESC) AS spending_rank\n    FROM customer_spending\n)\nSELECT\n    customer_id,\n    customer_name,\n    total_spending,\n    spending_rank\nFROM ranked_customers\nORDER BY total_spending DESC\nLIMIT 5;\n```\n\nIf your table already has total order amounts in `orders`, a simpler version is:\n\n```sql\nWITH customer_spending AS (\n    SELECT\n        c.customer_id,\n        c.customer_name,\n        SUM(o.order_total) AS total_spending\n    FROM customers c\n    JOIN orders o\n        ON c.customer_id = o.customer_id\n    GROUP BY c.customer_id, c.customer_name\n)\nSELECT\n    customer_id,\n    customer_name,\n    total_spending,\n    RANK() OVER (ORDER BY total_spending DESC) AS spending_rank\nFROM customer_spending\nORDER BY total_spending DESC\nLIMIT 5;\n```\n\nIf you want, I can also tailor this to your exact schema.",
+    "latency_s": 3.8020512079820037,
+    "cost_usd": 0.005605,
+    "sql": "WITH customer_spending AS (\n    SELECT\n        c.customer_id,\n        c.customer_name,\n        SUM(oi.quantity * oi.unit_price) AS total_spending\n    FROM customers c\n    JOIN orders o\n        ON c.customer_id = o.customer_id\n    JOIN order_items oi\n        ON o.order_id = oi.order_id\n    GROUP BY c.customer_id, c.customer_name\n),\nranked_customers AS (\n    SELECT\n        customer_id,\n        customer_name,\n        total_spending,\n        RANK() OVER (ORDER BY total_spending DESC) AS spending_rank\n    FROM customer_spending\n)\nSELECT\n    customer_id,\n    customer_name,\n    total_spending,\n    spending_rank\nFROM ranked_customers\nORDER BY total_spending DESC\nLIMIT 5;",
+    "rows": null
   },
   "q_010_2": {
-    "text": "```sql\nSELECT\n    ar.name AS artist_name,\n    COUNT(DISTINCT g.genre_id) AS distinct_genre_count\nFROM artist ar\nJOIN album al\n    ON ar.artist_id = al.artist_id\nJOIN track t\n    ON al.album_id = t.album_id\nJOIN genre g\n    ON t.genre_id = g.genre_id\nGROUP BY ar.artist_id, ar.name\nHAVING COUNT(DISTINCT g.genre_id) > 3;\n```",
-    "sql": "SELECT\n    ar.name AS artist_name,\n    COUNT(DISTINCT g.genre_id) AS distinct_genre_count\nFROM artist ar\nJOIN album al\n    ON ar.artist_id = al.artist_id\nJOIN track t\n    ON al.album_id = t.album_id\nJOIN genre g\n    ON t.genre_id = g.genre_id\nGROUP BY ar.artist_id, ar.name\nHAVING COUNT(DISTINCT g.genre_id) > 3;",
-    "rows": null,
-    "sql_attempts": 1,
-    "latency_s": 3.7648019589832984,
-    "cost_usd": 0.0015875
+    "text": "```sql\nSELECT\n  ar.name AS artist_name,\n  COUNT(DISTINCT g.genre_id) AS distinct_genre_count\nFROM artists ar\nJOIN albums al\n  ON al.artist_id = ar.artist_id\nJOIN tracks t\n  ON t.album_id = al.album_id\nJOIN genres g\n  ON g.genre_id = t.genre_id\nGROUP BY ar.artist_id, ar.name\nHAVING COUNT(DISTINCT g.genre_id) > 3;\n```",
+    "latency_s": 1.5452090420294553,
+    "cost_usd": 0.0015875,
+    "sql": "SELECT\n  ar.name AS artist_name,\n  COUNT(DISTINCT g.genre_id) AS distinct_genre_count\nFROM artists ar\nJOIN albums al\n  ON al.artist_id = ar.artist_id\nJOIN tracks t\n  ON t.album_id = al.album_id\nJOIN genres g\n  ON g.genre_id = t.genre_id\nGROUP BY ar.artist_id, ar.name\nHAVING COUNT(DISTINCT g.genre_id) > 3;",
+    "rows": null
   }
 }

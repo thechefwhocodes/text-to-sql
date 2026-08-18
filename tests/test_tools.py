@@ -4,7 +4,7 @@ import sqlite3
 import pytest
 from pydantic import ValidationError
 
-from src.tools import RunSQLTool
+from src.tools import TextToSQLTool
 
 
 @pytest.fixture
@@ -19,7 +19,7 @@ def conn():
 
 @pytest.fixture
 def tool():
-    return RunSQLTool()
+    return TextToSQLTool()
 
 
 def test_check_sql_allows_select(tool):
@@ -52,13 +52,15 @@ def test_run_sql_returns_rows(tool, conn):
 def test_run_sql_returns_error_content_for_write_statement(tool, conn):
     result = tool.run_sql(conn, "DROP TABLE items")
     assert result.rows is None
-    assert "error" in json.loads(result.content)
+    assert "error" in json.loads(result.error)
+    assert result.sql == "DROP TABLE items"  # the attempted SQL is still recorded
 
 
 def test_run_sql_returns_error_content_for_bad_syntax(tool, conn):
     result = tool.run_sql(conn, "SELECT * FROM not_a_table")
     assert result.rows is None
-    assert "error" in json.loads(result.content)
+    assert "error" in json.loads(result.error)
+    assert result.sql == "SELECT * FROM not_a_table"
 
 
 def test_run_dispatches_sql_key_from_args(tool, conn):
@@ -78,3 +80,29 @@ def test_parse_tool_args_raises_on_invalid_json(tool):
 def test_parse_tool_args_raises_on_schema_mismatch(tool):
     with pytest.raises(ValidationError):
         tool.parse_tool_args('{"query": "SELECT 1"}')  # wrong key name
+
+
+def test_get_tool_turn_carries_the_tool_result_content(tool, conn):
+    """The tool turn's `content` is what the model actually sees — it must
+    reflect the real rows, not come back empty or dropped."""
+    result = tool.run_sql(conn, "SELECT * FROM items ORDER BY id")
+
+    turn = tool.get_tool_turn("call_1", result)
+
+    assert json.loads(turn.content) == result.rows.to_dict("records")
+    assert turn.sql == "SELECT * FROM items ORDER BY id"
+    assert turn.rows.to_dict("records") == result.rows.to_dict("records")
+    assert turn.to_message() == {
+        "role": "tool",
+        "tool_call_id": "call_1",
+        "content": turn.content,
+    }
+
+
+def test_get_tool_turn_carries_content_for_a_failed_query(tool, conn):
+    result = tool.run_sql(conn, "SELECT * FROM not_a_table")
+
+    turn = tool.get_tool_turn("call_1", result)
+
+    assert "error" in json.loads(turn.content)
+    assert turn.rows is None

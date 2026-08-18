@@ -4,8 +4,8 @@ Catalog of models available to src.llm.LLM.
 
 from dataclasses import dataclass
 
-GPT_OSS_120B = "gpt-oss-120b"
 GPT_5_4 = "gpt-5.4"
+GPT_OSS_120B = "gpt-oss-120b"
 
 OPENAI_PROVIDER = "Open AI"
 FIREWORKS_PROVIDER = "Fireworks AI"
@@ -20,7 +20,7 @@ FIREWORKS_BASE_URL = "https://api.fireworks.ai/inference/v1"
 @dataclass(frozen=True)
 class ModelConfig:
     id: str  # full Fireworks model id, e.g. "accounts/fireworks/models/minimax-m3"
-    base_url :str
+    base_url: str
     api_key_env: str
     provider: str
     input_price_per_million: float  # USD per 1M input tokens
@@ -49,8 +49,8 @@ MODELS: dict[str, ModelConfig] = {
         api_key_env=OPENAI_KEY_ENV_VAR,
         provider=OPENAI_PROVIDER,
         input_price_per_million=2.5,
-        output_price_per_million=15
-    )
+        output_price_per_million=15,
+    ),
 }
 
 DEFAULT_MODEL = GPT_OSS_120B

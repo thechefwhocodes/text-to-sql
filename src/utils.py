@@ -1,6 +1,7 @@
 import sqlite3
-from typing import List, Dict, Any, Optional
 from pathlib import Path
+from typing import Any
+
 import pandas as pd
 
 
@@ -37,9 +38,9 @@ def load_db(db_path: str = "data/Chinook.db") -> sqlite3.Connection:
 def query_db(
     conn: sqlite3.Connection,
     query: str,
-    params: Optional[tuple] = None,
+    params: tuple | None = None,
     return_as_df: bool = True,
-) -> List[Dict[str, Any]] | pd.DataFrame:
+) -> list[dict[str, Any]] | pd.DataFrame:
     """
     Execute a SQL query and return results as a pandas DataFrame or list of dictionaries.
 
@@ -74,7 +75,7 @@ def query_db(
         raise sqlite3.Error(f"Error executing query: {e}")
 
 
-def get_schema(conn: sqlite3.Connection) -> Dict[str, List[Dict[str, str]]]:
+def get_schema(conn: sqlite3.Connection) -> dict[str, list[dict[str, str]]]:
     """
     Get the database schema including all tables and their columns.
 
@@ -100,9 +101,7 @@ def get_schema(conn: sqlite3.Connection) -> Dict[str, List[Dict[str, str]]]:
     return schema
 
 
-def print_table_schema(
-    conn: sqlite3.Connection, table_name: Optional[str] = None
-) -> None:
+def print_table_schema(conn: sqlite3.Connection, table_name: str | None = None) -> None:
     """
     Print a formatted view of the database schema.
 
@@ -146,7 +145,9 @@ def print_table_schema(
 
 
 def get_ddl(conn: sqlite3.Connection) -> str:
-    rows = query_db(conn,
+    rows = query_db(
+        conn,
         "SELECT sql FROM sqlite_master WHERE type='table' AND sql IS NOT NULL ORDER BY name",
-        return_as_df=False)
+        return_as_df=False,
+    )
     return "\n\n".join(r["sql"] for r in rows)

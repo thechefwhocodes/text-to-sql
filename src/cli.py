@@ -3,7 +3,11 @@
 from src.agent import Agent
 from src.utils import load_db
 
-BANNER = "Text-to-SQL CLI — ask a question about the database in plain English. Type 'exit' to quit."
+BANNER = """
+----------------
+Text-to-SQL CLI — ask a question about the database in plain English. Type 'exit' to quit.
+----------------
+"""
 
 
 def main() -> None:
@@ -19,19 +23,20 @@ def main() -> None:
             print()
             break
 
-        if not question:
-            continue
         if question.lower() in ("exit", "quit"):
             break
+        if not question:
+            continue
 
         answer = agent.ask(question)
 
-        if answer.sql:
-            print(f"\nSQL:\n{answer.sql}")
-        if answer.rows is not None:
-            print(f"\nRows:\n{answer.rows.to_string(index=False)}")
+        if answer.text_to_sql_tool_turn:
+            print(f"\nSQL:\n{answer.text_to_sql_tool_turn.sql}")
+            print(
+                f"---------\nRows:\n{answer.text_to_sql_tool_turn.rows.to_string(index=False)}"
+            )
 
-        print(f"\n{answer.text}")
+        print(f"---------\nAnswer:\n{answer.text}")
 
     conn.close()
 

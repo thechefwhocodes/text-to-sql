@@ -1,18 +1,45 @@
+import sqlite3
+from dataclasses import dataclass
+
 import pandas as pd
 
-from src.agent import Answer
-from src.eval import is_correct, score_run, summarize
+from src.agent import Response
+from src.eval import _from_cache, _to_cache, is_correct, run_baseline_cached, score_run, summarize
+from src.turns import TextToSQLToolTurn
 
 
 def make_answer(rows=None, latency_s=1.0, cost_usd=0.01):
-    return Answer(
+    tool_turn = None
+    if rows is not None:
+        tool_turn = TextToSQLToolTurn(
+            tool_call_id="call_1", content="", sql="SELECT 1", rows=pd.DataFrame(rows)
+        )
+    return Response(
         text="",
-        sql=None,
-        rows=None if rows is None else pd.DataFrame(rows),
-        sql_attempts=1,
         latency_s=latency_s,
         cost_usd=cost_usd,
+        text_to_sql_tool_turn=tool_turn,
     )
+
+
+@dataclass
+class FakeTurn:
+    content: str
+    latency_s: float = 0.0
+    cost_usd: float = 0.0
+
+
+class FakeLLM:
+    """Counts calls so tests can assert the cache actually prevents re-calling
+    the model — that's the entire reason the cache exists."""
+
+    def __init__(self, content: str):
+        self.content = content
+        self.calls = 0
+
+    def chat(self, messages, model=None):
+        self.calls += 1
+        return FakeTurn(content=self.content)
 
 
 def test_is_correct_ignores_row_order():
@@ -47,7 +74,14 @@ def test_is_correct_true_when_actual_has_an_extra_unrequested_column():
     # real case: agent's q_005 answer included EmployeeId alongside the
     # requested name and count
     answer = make_answer(
-        rows=[{"EmployeeId": 3, "FirstName": "Jane", "LastName": "Peacock", "CustomerCount": 21}]
+        rows=[
+            {
+                "EmployeeId": 3,
+                "FirstName": "Jane",
+                "LastName": "Peacock",
+                "CustomerCount": 21,
+            }
+        ]
     )
     expected = [{"EmployeeName": "Jane Peacock", "CustomerCount": 21}]
     assert is_correct(answer, expected)
@@ -55,7 +89,11 @@ def test_is_correct_true_when_actual_has_an_extra_unrequested_column():
 
 def test_is_correct_true_when_gold_column_is_split_across_actual_columns():
     # real case: agent's q_009 answer split CustomerName into FirstName/LastName
-    answer = make_answer(rows=[{"FirstName": "Helena", "LastName": "Holý", "TotalSpent": 49.62, "Rank": 1}])
+    answer = make_answer(
+        rows=[
+            {"FirstName": "Helena", "LastName": "Holý", "TotalSpent": 49.62, "Rank": 1}
+        ]
+    )
     expected = [{"CustomerName": "Helena Holý", "TotalSpent": 49.62, "Rank": 1}]
     assert is_correct(answer, expected)
 
@@ -87,7 +125,10 @@ def test_summarize_computes_accuracy_and_misses():
         {"id": "q1", "expected_result": [{"a": 1}]},
         {"id": "q2", "expected_result": [{"a": 1}]},
     ]
-    answers = [make_answer(rows=[{"a": 1}]), make_answer(rows=[{"a": 2}])]  # q1 right, q2 wrong
+    answers = [
+        make_answer(rows=[{"a": 1}]),
+        make_answer(rows=[{"a": 2}]),
+    ]  # q1 right, q2 wrong
 
     summary = summarize("test", score_run(questions, answers))
 
@@ -117,3 +158,58 @@ def test_summarize_with_no_misses_reports_empty_dict():
 
     assert summary.accuracy == 1.0
     assert summary.misses == {}
+
+
+def test_cache_round_trip_preserves_correctness_for_a_successful_answer():
+    answer = make_answer(rows=[{"a": 1}])
+
+    restored = _from_cache(_to_cache(answer))
+
+    assert is_correct(restored, [{"a": 1}])
+    assert restored.text_to_sql_tool_turn.sql == "SELECT 1"
+
+
+def test_cache_round_trip_survives_a_question_that_never_called_the_tool():
+    """The baseline sometimes doesn't produce runnable SQL at all — the cache
+    must round-trip a None tool turn, not crash on it."""
+    answer = make_answer(rows=None)
+
+    restored = _from_cache(_to_cache(answer))
+
+    assert restored.text_to_sql_tool_turn is None
+    assert not is_correct(restored, [{"a": 1}])
+
+
+def test_run_baseline_cached_calls_the_model_on_a_cache_miss():
+    conn = sqlite3.connect(":memory:")
+    conn.execute("CREATE TABLE items (id INTEGER)")
+    conn.execute("INSERT INTO items VALUES (1)")
+    conn.commit()
+
+    llm = FakeLLM("SELECT * FROM items")
+    questions = [{"id": "q1", "question": "how many items?"}]
+    cache = {}
+
+    answers = run_baseline_cached(conn, questions, run_idx=0, cache=cache, llm=llm)
+
+    assert llm.calls == 1
+    assert "q1_0" in cache
+    assert answers[0].text_to_sql_tool_turn.rows.to_dict("records") == [{"id": 1}]
+
+    conn.close()
+
+
+def test_run_baseline_cached_skips_the_model_on_a_cache_hit():
+    """The whole point of the cache is to not re-pay for GPT-5.4 calls on
+    every eval run — a cache hit must never touch the model."""
+    conn = sqlite3.connect(":memory:")
+    llm = FakeLLM("SELECT * FROM items")
+    questions = [{"id": "q1", "question": "how many items?"}]
+    cache = {"q1_0": _to_cache(make_answer(rows=[{"id": 1}]))}
+
+    answers = run_baseline_cached(conn, questions, run_idx=0, cache=cache, llm=llm)
+
+    assert llm.calls == 0
+    assert answers[0].text_to_sql_tool_turn.rows.to_dict("records") == [{"id": 1}]
+
+    conn.close()

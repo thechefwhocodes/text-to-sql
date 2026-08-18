@@ -33,7 +33,9 @@ class LLM:
             )
         return self._clients[key]
 
-    def chat(self, messages: list[dict], model: str = DEFAULT_MODEL, **kwargs) -> AgentTurn:
+    def chat(
+        self, messages: list[dict], model: str = DEFAULT_MODEL, **kwargs
+    ) -> AgentTurn:
         """Send a chat completion request. Extra kwargs (temperature, tools, ...) pass through."""
         model_config = get_model(model)
         client = self._client_for(model_config)
@@ -47,5 +49,8 @@ class LLM:
         latency_s = time.perf_counter() - start
 
         return AgentTurn.from_completion(
-            completion, model=model, model_config=model_config, latency_s=latency_s
+            model=model,
+            latency_s=latency_s,
+            completion=completion,
+            model_config=model_config,
         )

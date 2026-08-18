@@ -28,9 +28,13 @@ def extract_sql(text: str) -> str:
 
 
 def ask_baseline(
-    conn: sqlite3.Connection, llm: LLM, question: str, model: str
+    conn: sqlite3.Connection,
+    question: str,
+    llm: LLM | None = None,
+    model: str = GPT_5_4,
 ) -> Response:
     """Run the customer's prompt, then execute whatever SQL comes back."""
+    llm = llm or LLM()
     sql_tool = TextToSQLTool()
 
     turn = llm.chat(

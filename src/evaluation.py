@@ -52,7 +52,9 @@ def is_matching(actual_rows: pd.DataFrame, expected_rows: pd.DataFrame):
     return True
 
 
-def print_report(report: dict[str, dict], question_with_answers: list[dict]):
+def print_report(
+    report: dict[str, dict[str, float]], question_with_answers: list[dict]
+):
     total_correct_responses, total_latency, total_cost = 0.0, 0.0, 0.0
     missed = []
     for question_id, stats in report.items():
@@ -123,11 +125,16 @@ def evaluate(
             if (
                 response.text_to_sql_tool_turn
                 and response.text_to_sql_tool_turn.rows is not None
-                and not response.text_to_sql_tool_turn.rows.empty
             ):
-                actual_rows = response.text_to_sql_tool_turn.rows
-                if is_matching(actual_rows, expected_answers[question["id"]]):
+                if (
+                    response.text_to_sql_tool_turn.rows.empty
+                    and len(expected_answers[question["id"]]) == 0
+                ):  # response and expected answer are both empty
                     report[question["id"]]["correct_response"] += 1
+                elif not response.text_to_sql_tool_turn.rows.empty:
+                    actual_rows = response.text_to_sql_tool_turn.rows
+                    if is_matching(actual_rows, expected_answers[question["id"]]):
+                        report[question["id"]]["correct_response"] += 1
 
     print_report(report, question_with_answers)
 

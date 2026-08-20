@@ -161,5 +161,14 @@
       {"ArtistName": "Iron Maiden", "GenreCount": 4}
     ],
     "evaluation": "sql_result_match"
+  },
+  {
+    "id": "q_011",
+    "question": "Show me the invoices from Antarctica",
+    "tier": 1,
+    "gold_sql": "SELECT InvoiceId, CustomerId, InvoiceDate, BillingAddress, BillingCity, BillingState, BillingCountry, Total FROM Invoice WHERE BillingCountry = 'Antarctica'",
+    "gold_answer": "",
+    "expected_result": [],
+    "evaluation": "sql_result_match"
   }
 ]

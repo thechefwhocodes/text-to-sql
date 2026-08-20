@@ -1,326 +1,151 @@
-"""
-Evaluate our agent against the customer's baseline over the dev question set.
-Run with: python -m src.eval
-"""
-
 import json
-from dataclasses import dataclass
+import sqlite3
+from collections import defaultdict
 from pathlib import Path
 
 import pandas as pd
 
 from src.agent import Agent, Response
-from src.baseline import QUESTIONS_PATH, ask_baseline
-from src.llm import LLM
-from src.models import GPT_5_4, GPT_OSS_120B
-from src.turns import TextToSQLToolTurn
+from src.baseline import ask_baseline
+from src.models import DEFAULT_MODEL, GPT_5_4
 from src.utils import load_db
 
-CACHE_PATH = Path("data/eval_cache.json")
-ANSWERS_PATH = Path("data/dev_answers.json")
-NOTES_PATH = Path("NOTES.md")
-
-RUNS = 3
-QUERIES_PER_DAY = 30_000
-
-RESULTS_START = "<!-- eval-results:start -->"
-RESULTS_END = "<!-- eval-results:end -->"
+NUM_OF_RUNS = 3
+QUESTION_WITH_ANSWERS_PATH = Path("data/dev_questions_with_answers.json")
 
 
-# ---------------------------------------------------------------------------
-# Scoring
-# ---------------------------------------------------------------------------
+def load_expected_answers(question_with_answers: list[dict]) -> dict[str, pd.DataFrame]:
+    expected_answers = {}
+    for qa in question_with_answers:
+        expected_answers[qa["id"]] = pd.DataFrame(qa["expected_result"])
+
+    return expected_answers
 
 
-def is_correct(answer: Response, expected: list[dict]) -> bool:
-    """Same values as the gold answer — column names, column count, float
-    noise, and row order are all ignored, since many correct queries shape a
-    result differently."""
-    tool_turn = answer.text_to_sql_tool_turn
-    if tool_turn is None or tool_turn.rows is None:
-        return False
+def is_matching(actual_rows: pd.DataFrame, expected_rows: pd.DataFrame):
+    def to_string(value) -> str:
+        is_number = isinstance(value, (int, float))
+        return str(round(value, 2)) if is_number else str(value)
 
-    actual = tool_turn.rows.to_dict("records")
+    def row_words(row) -> set[str]:
+        words = set()
+        for value in row:
+            words.update(to_string(value).split())
+        return words
+
+    actual = [row_words(row) for row in actual_rows.itertuples(index=False)]
+    expected = [row_words(row) for row in expected_rows.itertuples(index=False)]
+
     if len(actual) != len(expected):
         return False
 
-    def cell(v) -> str:
-        is_number = isinstance(v, (int, float)) and not isinstance(v, bool)
-        return str(round(v, 2)) if is_number else str(v)
-
-    def words(row: dict) -> set[str]:
-        return {word for v in row.values() for word in cell(v).split()}
-
-    remaining = list(actual)
-    for expected_row in expected:
-        needed = words(expected_row)
-        match = next((row for row in remaining if needed <= words(row)), None)
+    # find any actual row whose words are a superset of expected
+    # row's words (extra columns like IDs are OK, missing ones aren't)
+    # if no actual row (that isn't already claimed) covers the expected row, return False
+    # else, claim the actual row so it can't be reused for another expected row
+    for exp_words in expected:
+        match = next((a for a in actual if exp_words <= a), None)
         if match is None:
             return False
-        remaining.remove(match)
+        actual.remove(match)
 
     return True
 
 
-@dataclass
-class Score:
-    """One question's result within one run."""
-
-    question_id: str
-    correct: bool
-    latency_s: float
-    cost_usd: float
-
-
-def score_run(questions: list[dict], answers: list[Response]) -> list[Score]:
-    return [
-        Score(
-            question_id=q["id"],
-            correct=is_correct(a, q["expected_result"]),
-            latency_s=a.latency_s,
-            cost_usd=a.cost_usd,
-        )
-        for q, a in zip(questions, answers)
-    ]
-
-
-# ---------------------------------------------------------------------------
-# Running the two arms
-# ---------------------------------------------------------------------------
-
-
-def run_agent(conn, questions: list[dict], llm: LLM) -> list[Response]:
-    """Our agent, one fresh conversation per question."""
-    return [
-        Agent(conn, model=GPT_OSS_120B, llm=llm).ask(q["question"]) for q in questions
-    ]
-
-
-def run_baseline_cached(
-    conn, questions: list[dict], run_idx: int, cache: dict, llm: LLM
-) -> list[Response]:
-    """The customer's prompt, reusing a cached answer for this run if we have one."""
-    answers = []
-    for q in questions:
-        key = f"{q['id']}_{run_idx}"
-        if key not in cache:
-            cache[key] = _to_cache(
-                ask_baseline(conn, q["question"], llm=llm, model=GPT_5_4)
+def print_report(
+    report: dict[str, dict[str, float]], question_with_answers: list[dict]
+):
+    total_correct_responses, total_latency, total_cost = 0.0, 0.0, 0.0
+    missed = []
+    for question_id, stats in report.items():
+        if stats["correct_response"] != NUM_OF_RUNS:
+            missed.append(
+                f"{question_id} ({int(stats['correct_response'])}/{NUM_OF_RUNS})"
             )
-        answers.append(_from_cache(cache[key]))
-    return answers
 
+        total_correct_responses += stats["correct_response"]
+        total_latency += stats["total_latency"]
+        total_cost += stats["total_cost"]
 
-def _to_cache(answer: Response) -> dict:
-    """Flatten a Response to plain JSON — `rows` is a DataFrame, which isn't
-    serialisable, and the tool turn may not exist at all if the question never
-    touched the tool."""
-    tool_turn = answer.text_to_sql_tool_turn
-    return {
-        "text": answer.text,
-        "latency_s": answer.latency_s,
-        "cost_usd": answer.cost_usd,
-        "sql": None if tool_turn is None else tool_turn.sql,
-        "rows": (
-            None
-            if tool_turn is None or tool_turn.rows is None
-            else tool_turn.rows.to_dict("records")
-        ),
-    }
-
-
-def _from_cache(entry: dict) -> Response:
-    tool_turn = None
-    if entry["sql"] is not None:
-        rows = None if entry["rows"] is None else pd.DataFrame(entry["rows"])
-        tool_turn = TextToSQLToolTurn(
-            tool_call_id="baseline", content="", sql=entry["sql"], rows=rows
-        )
-    return Response(
-        text=entry["text"],
-        latency_s=entry["latency_s"],
-        cost_usd=entry["cost_usd"],
-        text_to_sql_tool_turn=tool_turn,
+    accuracy = round(
+        (total_correct_responses / (NUM_OF_RUNS * len(question_with_answers))) * 100, 2
     )
-
-
-# ---------------------------------------------------------------------------
-# Aggregating results across runs
-# ---------------------------------------------------------------------------
-
-
-@dataclass
-class Summary:
-    """Metrics for one arm (agent or baseline), aggregated across all runs."""
-
-    name: str
-    num_questions: int
-    num_runs: int
-    accuracy: float
-    avg_latency_s: float
-    avg_cost_usd: float
-    misses: dict[str, int]  # question id -> number of runs it was wrong
-
-
-def summarize(name: str, scores: list[Score]) -> Summary:
-    """Aggregate every (question, run) score into one Summary."""
-    question_ids = {s.question_id for s in scores}
-
-    misses: dict[str, int] = {}
-    for s in scores:
-        if not s.correct:
-            misses[s.question_id] = misses.get(s.question_id, 0) + 1
-
-    return Summary(
-        name=name,
-        num_questions=len(question_ids),
-        num_runs=len(scores) // len(question_ids),
-        accuracy=sum(s.correct for s in scores) / len(scores),
-        avg_latency_s=sum(s.latency_s for s in scores) / len(scores),
-        avg_cost_usd=sum(s.cost_usd for s in scores) / len(scores),
-        misses=misses,
+    average_latency = round(
+        total_latency / (NUM_OF_RUNS * len(question_with_answers)), 3
     )
+    average_cost = round(total_cost / (NUM_OF_RUNS * len(question_with_answers)), 6)
 
-
-def print_summary(summary: Summary) -> None:
+    print(f"   accuracy: {accuracy}%")
+    print(f"   latency : {average_latency}s/query")
     print(
-        f"\n{summary.name} — {summary.num_runs} runs x {summary.num_questions} questions"
+        f"   cost    : ${average_cost}/query --> ${round(average_cost * 30_000, 2)}/day at 30,000 queries"
     )
+    if missed:
+        print(f"   missed  : {missed}")
+    print("-------------------")
+
+
+def evaluate_agent(
+    db_conn: sqlite3.Connection,
+    question_with_answers: list[dict],
+    expected_answers: dict[str, pd.DataFrame],
+):
     print(
-        f"  accuracy: {summary.accuracy:.1%}\n"
-        f"  latency : {summary.avg_latency_s:.2f}s/query\n"
-        f"  cost    : ${summary.avg_cost_usd:.5f}/query  "
-        f"-> ${summary.avg_cost_usd * QUERIES_PER_DAY:.2f}/day at {QUERIES_PER_DAY:,} queries"
+        f"Evaluating Agent ({DEFAULT_MODEL}): {NUM_OF_RUNS} runs X {len(question_with_answers)} questions"
     )
-    if summary.misses:
-        detail = ", ".join(
-            f"{qid} ({n}/{summary.num_runs})"
-            for qid, n in sorted(summary.misses.items())
-        )
-        print(f"  missed  : {detail}")
+    ask_fn = lambda q: Agent(conn=db_conn).ask(q)
+    evaluate(question_with_answers, expected_answers, ask_fn)
 
 
-# ---------------------------------------------------------------------------
-# Reporting
-# ---------------------------------------------------------------------------
-
-
-def render_markdown(summaries: list[Summary], questions: list[dict]) -> str:
-    question_text = {q["id"]: q["question"] for q in questions}
-
-    lines = [
-        RESULTS_START,
-        "## Evaluation Results",
-        "",
-        "_Auto-generated by `python -m src.eval` — do not edit by hand._",
-        "",
-        f"{summaries[0].num_runs} runs over {summaries[0].num_questions} dev questions.",
-        "",
-        "| Arm | Accuracy | Avg Latency/query | Avg Cost/query | Est. $/day @ 30k queries |",
-        "|---|---|---|---|---|",
-    ]
-    for s in summaries:
-        lines.append(
-            f"| {s.name} | {s.accuracy:.1%} | {s.avg_latency_s:.2f}s | "
-            f"${s.avg_cost_usd:.5f} | ${s.avg_cost_usd * QUERIES_PER_DAY:,.2f} |"
-        )
-
-    lines += ["", "### Missed Questions", ""]
-    for s in summaries:
-        lines.append(f"**{s.name}**")
-        lines.append("")
-        if not s.misses:
-            lines.append("_None — every question was answered correctly in every run._")
-        else:
-            for qid, n in sorted(s.misses.items()):
-                lines.append(
-                    f"- `{qid}` — wrong {n}/{s.num_runs} runs: {question_text[qid]}"
-                )
-        lines.append("")
-
-    lines.append(RESULTS_END)
-    return "\n".join(lines)
-
-
-def write_results_section(markdown: str) -> None:
-    """Replace the eval-results section in NOTES.md (between markers), or
-    append it as a new section if this is the first time the eval has run."""
-    text = NOTES_PATH.read_text() if NOTES_PATH.exists() else ""
-
-    if RESULTS_START in text and RESULTS_END in text:
-        before = text.split(RESULTS_START)[0]
-        after = text.split(RESULTS_END)[1]
-        text = before + markdown + after
-    else:
-        separator = "" if not text or text.endswith("\n\n") else "\n\n"
-        text = text + separator + markdown + "\n"
-
-    NOTES_PATH.write_text(text)
-
-
-def write_dev_answers(questions: list[dict], answers: list[Response]) -> None:
-    data = {
-        q["id"]: {
-            "sql": None
-            if a.text_to_sql_tool_turn is None
-            else a.text_to_sql_tool_turn.sql,
-            "answer": a.text,
-        }
-        for q, a in zip(questions, answers)
-    }
-    ANSWERS_PATH.write_text(json.dumps(data, indent=2))
-    print(f"\nWrote {ANSWERS_PATH}")
-
-
-# ---------------------------------------------------------------------------
-# Entry point
-# ---------------------------------------------------------------------------
-
-
-def main() -> None:
-    questions = json.loads(QUESTIONS_PATH.read_text())
-    conn = load_db()
-    llm = LLM()
-
-    print(f"Our agent ({GPT_OSS_120B}): {RUNS} runs x {len(questions)} questions")
-    agent_runs = [run_agent(conn, questions, llm) for _ in range(RUNS)]
-    agent_summary = summarize(
-        f"Our agent ({GPT_OSS_120B})",
-        [score for run in agent_runs for score in score_run(questions, run)],
+def evaluate_baseline(
+    db_conn: sqlite3.Connection,
+    question_with_answers: list[dict],
+    expected_answers: dict[str, pd.DataFrame],
+):
+    print(
+        f"Evaluating Baseline ({GPT_5_4}): {NUM_OF_RUNS} runs X {len(question_with_answers)} questions"
     )
-    write_dev_answers(questions, agent_runs[0])
-    print_summary(agent_summary)
+    ask_fn = lambda q: ask_baseline(conn=db_conn, question=q)
+    evaluate(question_with_answers, expected_answers, ask_fn)
 
-    summaries = [agent_summary]
 
-    cache = json.loads(CACHE_PATH.read_text()) if CACHE_PATH.exists() else {}
-    baseline_summary = None
-    try:
-        print(
-            f"\nBaseline ({GPT_5_4}): {RUNS} runs x {len(questions)} questions (cached where possible)"
-        )
-        baseline_runs = [
-            run_baseline_cached(conn, questions, i, cache, llm) for i in range(RUNS)
-        ]
-    except Exception as e:
-        print(f"  skipping baseline arm: {e}")
-    else:
-        baseline_summary = summarize(
-            f"Baseline ({GPT_5_4})",
-            [score for run in baseline_runs for score in score_run(questions, run)],
-        )
-        print_summary(baseline_summary)
-    finally:
-        # Persist whatever got cached, even if a later question failed.
-        CACHE_PATH.write_text(json.dumps(cache, indent=2))
+def evaluate(
+    question_with_answers: list[dict],
+    expected_answers: dict[str, pd.DataFrame],
+    ask_fn,
+):
+    report = defaultdict[str, defaultdict[str, float]](
+        lambda: defaultdict[str, float](float)
+    )
+    for question in question_with_answers:
+        for _ in range(NUM_OF_RUNS):
+            response: Response = ask_fn(question["question"])
+            report[question["id"]]["total_latency"] += response.latency_s
+            report[question["id"]]["total_cost"] += response.cost_usd
+            if (
+                response.text_to_sql_tool_turn
+                and response.text_to_sql_tool_turn.rows is not None
+            ):
+                if (
+                    response.text_to_sql_tool_turn.rows.empty
+                    and len(expected_answers[question["id"]]) == 0
+                ):  # response and expected answer are both empty
+                    report[question["id"]]["correct_response"] += 1
+                elif not response.text_to_sql_tool_turn.rows.empty:
+                    actual_rows = response.text_to_sql_tool_turn.rows
+                    if is_matching(actual_rows, expected_answers[question["id"]]):
+                        report[question["id"]]["correct_response"] += 1
 
-    if baseline_summary:
-        summaries.append(baseline_summary)
+    print_report(report, question_with_answers)
 
-    conn.close()
 
-    write_results_section(render_markdown(summaries, questions))
-    print(f"\nWrote results to {NOTES_PATH}")
+def main():
+    db_conn: sqlite3.Connection = load_db()
+    question_with_answers = json.loads(QUESTION_WITH_ANSWERS_PATH.read_text())
+    expected_answers = load_expected_answers(question_with_answers)
+
+    evaluate_agent(db_conn, question_with_answers, expected_answers)
+    # evaluate_baseline(db_conn, question_with_answers, expected_answers)
 
 
 if __name__ == "__main__":

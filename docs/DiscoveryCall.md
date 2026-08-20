@@ -67,7 +67,8 @@ I want to take this time to really appreciate you joining. I want to make sure w
     - Did it cost trust or budget?
 
 ### Timeline:
-- What is the timeline you have in mind for this project
+- What is the timeline you have in mind for this project?
+- What happens if this isn't ready by timeline?
 
 ### Find the People:
 - Budget owner
@@ -82,6 +83,13 @@ I want to take this time to really appreciate you joining. I want to make sure w
 ### Success:
 - What does success look like, in number you would defend to your boss?
 - Who would push back on that number, and why?
+
+### Decision Process
+- Once we build the pilot, who signs off last? What would make them say no? 
+- Is this being compared against any other vendor or option?
+
+### Implication
+- What happens if we don't do anything, what does the future looks like a year from now?
 
 ### Reflect Back:
 - So what I am hearing is X, causing Y, costing Z, is that right?

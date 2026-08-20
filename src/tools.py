@@ -8,8 +8,8 @@ from dataclasses import dataclass
 import pandas as pd
 from pydantic import BaseModel, Field
 
-from src.turns import TextToSQLToolTurn, ToolTurn
-from src.utils import query_db
+from src.turns import TableSchemaToolTurn, TextToSQLToolTurn, ToolTurn
+from src.utils import get_ddl_for_table, query_db
 
 
 class ToolResult(ABC):
@@ -45,6 +45,50 @@ class Tool(ABC):
         """Parse a tool call's JSON arguments"""
         data = json.loads(raw)
         return self.parameters.model_validate(data).model_dump()
+
+
+@dataclass
+class TableSchemaToolResult(ToolResult):
+    ddl: str | None
+    error: str | None = None
+
+
+class TableSchemaToolArgs(BaseModel):
+    """The arguments the model fills in to call run_sql."""
+
+    table_name: str = Field(description="A single table name in the database.")
+
+
+class TableSchemaTool(Tool):
+    name: str = "get_table_schema"
+    definition: str = "Run get_table_schema to fetch all the schema for a particual table available in the database"
+    parameters: BaseModel = TableSchemaToolArgs
+
+    def run(self, conn: sqlite3.Connection, args: dict) -> TableSchemaToolResult:
+        return self.get_ddl_for_table(conn, args["table_name"])
+
+    def get_tool_turn(
+        self, tool_call_id: str, result: TableSchemaToolResult
+    ) -> TableSchemaToolTurn:
+        if result.error:
+            return TableSchemaToolTurn(
+                ddl=None,
+                tool_call_id=tool_call_id,
+                content=result.error,
+            )
+
+        return TableSchemaToolTurn(
+            ddl=result.ddl,
+            tool_call_id=tool_call_id,
+            content=result.ddl,
+        )
+
+    def get_ddl_for_table(self, conn: sqlite3.Connection, table_name: str):
+        try:
+            ddl = get_ddl_for_table(conn, table_name)
+            return TableSchemaToolResult(ddl)
+        except Exception as e:
+            return TableSchemaToolResult(error=json.dumps({"error": str(e)}), ddl=None)
 
 
 @dataclass
@@ -111,7 +155,9 @@ class TextToSQLTool(Tool):
         return TextToSQLToolResult(sql=sql, rows=rows)
 
 
-TOOLS: dict[str, Tool] = {tool.name: tool for tool in [TextToSQLTool()]}
+TOOLS: dict[str, Tool] = {
+    tool.name: tool for tool in [TextToSQLTool(), TableSchemaTool()]
+}
 
 
 def get_tool(name: str) -> Tool:

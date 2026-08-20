@@ -75,6 +75,13 @@ class TextToSQLToolTurn(ToolTurn):
 
 
 @dataclass
+class TableSchemaToolTurn(ToolTurn):
+    """The result of a text to sql tool turn, reported back to the model."""
+
+    ddl: str
+
+
+@dataclass
 class AgentTurn(Turn):
     model: str
     cost_usd: float

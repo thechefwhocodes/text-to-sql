@@ -21,13 +21,14 @@ from src.turns import (
     UserTurn,
     to_messages,
 )
-from src.utils import get_ddl
+from src.utils import get_table_names
 
 SYSTEM_PROMPT = """
 You are a SQL analyst answering questions about a SQLite database.
 Only select the columns needed to answer the question.
+Use get_table_schema to get the schema for a particular table.
 
-Schema: {ddl}"""
+All Table Names: {table_name}"""
 
 # One call to write the SQL, up to two more to fix it, one to summarise the rows.
 MAX_STEPS = 4
@@ -79,7 +80,9 @@ class Agent:
         self.model = model
         self.llm = llm or LLM()
         self.conversation: Conversation = [
-            SystemTurn(content=SYSTEM_PROMPT.format(ddl=get_ddl(self.conn)))
+            SystemTurn(
+                content=SYSTEM_PROMPT.format(table_name=get_table_names(self.conn))
+            )
         ]
 
     def ask(self, question: str) -> Response:

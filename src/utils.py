@@ -144,10 +144,31 @@ def print_table_schema(conn: sqlite3.Connection, table_name: str | None = None) 
     print("=" * 100 + "\n")
 
 
+def get_table_names(conn: sqlite3.Connection) -> list[str]:
+    rows = query_db(
+        conn,
+        "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name",
+        return_as_df=False,
+    )
+    return [r["name"] for r in rows]
+
+
 def get_ddl(conn: sqlite3.Connection) -> str:
     rows = query_db(
         conn,
         "SELECT sql FROM sqlite_master WHERE type='table' AND sql IS NOT NULL ORDER BY name",
         return_as_df=False,
     )
+    return "\n\n".join(r["sql"] for r in rows)
+
+
+def get_ddl_for_table(conn: sqlite3.Connection, table_name: str | None = None) -> str:
+    query = "SELECT sql FROM sqlite_master WHERE type='table' AND sql IS NOT NULL"
+    params = None
+    if table_name:
+        query += " AND name = ?"
+        params = (table_name,)
+    query += " ORDER BY name"
+
+    rows = query_db(conn, query, params=params, return_as_df=False)
     return "\n\n".join(r["sql"] for r in rows)
